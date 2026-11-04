@@ -1,0 +1,35 @@
+spring:
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: jdbc:h2:mem:erpbijoux_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+
+  flyway:
+    enabled: false
+
+erp:
+  fiscal:
+    sealing-secret: TESTING_FISCAL_SEALING_KEY_NF525_TEST_PURPOSES
+  security:
+    jwt:
+      secret: TESTING_JWT_SIGNING_KEY_TEST_PURPOSES_256_BITS_MINIMUM
+      expiration-ms: 3600000
+
+logging:
+  level:
+    fr.bijoux.erp: DEBUG
+    org.springframework.modulith: DEBUG
