@@ -5,7 +5,9 @@ package fr.bijoux.erp.catalog.domain.model;
  */
 public enum VatRegime {
     STANDARD_20("Régime de droit commun TVA à 20%"),
-    MARGE_OCCASION_ART_297A("Régime de la TVA sur marge - Biens d'occasion (Art. 297 A du CGI)");
+    REDUIT_5_5("Taux réduit TVA à 5.5%"),
+    MARGE_OCCASION_ART_297A("Régime de la TVA sur marge - Biens d'occasion (Art. 297 A du CGI)"),
+    EXONERE("Exonération de TVA");
 
     private final String description;
 

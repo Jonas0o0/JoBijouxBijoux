@@ -1,0 +1,9 @@
+package fr.bijoux.erp.pos.domain.model;
+
+public enum PosItemType {
+    CATALOG_ITEM,
+    CUSTOM_ORDER,
+    REPAIR_ORDER,
+    GOLD_BUYBACK_OFFSET,
+    MISCELLANEOUS
+}

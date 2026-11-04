@@ -67,6 +67,18 @@ public class FiscalSealingEngine {
      * @param chainHash Hash d'enregistrement à sceller
      * @return Signature hexadécimale majuscule
      */
+    public String sealRecord(String secretKey, String chainHash) {
+        Objects.requireNonNull(secretKey, "La clé de scellement ne peut pas être null");
+        return sealRecord(secretKey.getBytes(StandardCharsets.UTF_8), chainHash);
+    }
+
+    /**
+     * Scelle un hash chaîné avec une clé secrète via HMAC-SHA256 (Signature fiscale).
+     *
+     * @param secretKey Clé secrète de scellement
+     * @param chainHash Hash d'enregistrement à sceller
+     * @return Signature hexadécimale majuscule
+     */
     public String sealRecord(byte[] secretKey, String chainHash) {
         Objects.requireNonNull(secretKey, "La clé de scellement ne peut pas être null");
         Objects.requireNonNull(chainHash, "Le hash à sceller ne peut pas être null");
