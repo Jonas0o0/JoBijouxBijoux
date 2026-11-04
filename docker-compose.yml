@@ -1,0 +1,160 @@
+name: erp-bijoux
+
+services:
+  # -------------------------------------------------------------
+  # Base de données PostgreSQL 16 (Base Principale + Base Audit)
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: erp_bijoux_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-erp_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_secure_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_bijoux}
+      TZ: Europe/Paris
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/compose/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erp_admin} -d ${POSTGRES_DB:-erp_bijoux}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------------------------------------------
+  # Cache & Rate Limiting (Redis 7)
+  # -------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: erp_bijoux_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redis_local_pass}"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_local_pass}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # -------------------------------------------------------------
+  # Message Broker (RabbitMQ 3.13 avec Management)
+  # -------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: erp_bijoux_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      TZ: Europe/Paris
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"       # Protocole AMQP
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672" # Console d'administration Web
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------------------------------------------
+  # Mock SMTP Server & Web Client (Mailpit)
+  # Pour tester l'envoi de tickets, factures, devis et fiches SAV
+  # -------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: erp_bijoux_mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"  # Port SMTP
+      - "${MAILPIT_WEB_PORT:-8025}:8025"    # Interface Web Inspecteur d'emails
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_DATABASE: "" # In-memory
+      TZ: Europe/Paris
+
+  # -------------------------------------------------------------
+  # Simulateur Matériel de Caisse & Atelier (Mock Scale & Printer)
+  # Permet de développer sans balance de précision ni imprimante physique
+  # -------------------------------------------------------------
+  mock-hardware:
+    build:
+      context: ./hardware-agent/mock-simulator
+      dockerfile: Dockerfile
+    container_name: erp_bijoux_mock_hardware
+    restart: unless-stopped
+    ports:
+      - "8089:8089"  # API HTTP & WebSocket (Scale Mettler Toledo SICS + TPE)
+      - "9100:9100"  # Socket RAW TCP (Imprimante étiquettes ZPL/EPL)
+    environment:
+      PYTHONUNBUFFERED: "1"
+
+  # -------------------------------------------------------------
+  # Backend Spring Boot (Monolithe modulaire)
+  # -------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.dev
+    container_name: erp_bijoux_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8080:8080"  # REST & WebSocket API
+      - "5005:5005"  # Port Debug JVM Remote
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-erp_bijoux}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-erp_admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-erp_secure_password_2026}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_local_pass}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-guest}
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: 1025
+      HARDWARE_AGENT_MOCK_URL: http://mock-hardware:8089
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    volumes:
+      - ./backend:/workspace/backend
+      - gradle_cache:/root/.gradle
+
+  # -------------------------------------------------------------
+  # Frontend Vite Dev Server (Backoffice & POS Caisse)
+  # -------------------------------------------------------------
+  frontend:
+    image: node:20-alpine
+    container_name: erp_bijoux_frontend
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "3000:3000"  # Caisse POS
+      - "3001:3001"  # Backoffice ERP
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+      VITE_HARDWARE_BRIDGE_URL: ws://localhost:8089/ws/scale
+    volumes:
+      - .:/app
+    command: sh -c "corepack enable && pnpm install && pnpm dev"
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  gradle_cache:

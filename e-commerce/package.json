@@ -1,0 +1,16 @@
+{
+  "name": "@erp-bijoux/ecommerce-connectors",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless connectors for Shopify, WooCommerce, PrestaShop sync",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "axios": "^1.7.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}

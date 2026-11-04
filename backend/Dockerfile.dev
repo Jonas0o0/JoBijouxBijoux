@@ -1,0 +1,11 @@
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /workspace
+
+# Install bash and curl for healthchecks
+RUN apk add --no-cache bash curl
+
+# The application can be mounted and run via gradle or loaded as prebuilt jar
+EXPOSE 8080 5005
+
+CMD ["./gradlew", ":backend:api-public:bootRun", "--no-daemon"]

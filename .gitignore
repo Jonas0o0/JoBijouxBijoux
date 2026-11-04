@@ -1,0 +1,56 @@
+# Git ignore for ERP Bijoux (Monorepo Java/Gradle + TypeScript/pnpm)
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Build tools & caches
+.gradle/
+build/
+out/
+target/
+dist/
+.turbo/
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+
+# Logs & Dumps
+*.log
+logs/
+*.hprof
+*.dump
+dump/
+
+# Docker volumes
+docker-data/
+postgres-data/
+redis-data/
+rabbitmq-data/
+
+# Test reports & Coverage
+coverage/
+jacoco/
+test-results/
+
+# Migration temporary dumps (ODEIS legacy)
+migration/dumps/
+migration/temp/
