@@ -1,4 +1,5 @@
-/**
- * Module Rachat d'Or aux particuliers et calcul de la TMP (11.5%).
- */
+@org.springframework.modulith.ApplicationModule(
+        type = org.springframework.modulith.ApplicationModule.Type.OPEN,
+        displayName = "Gold Repurchase (Rachat d'Or & TMP)"
+)
 package fr.bijoux.erp.gold;
