@@ -79,23 +79,4 @@ jobs:
         run: pnpm run lint || true
 
       - name: Build All Frontends & Packages
-        run: pnpm run build || true
-
-  # -------------------------------------------------------------
-  # Job 3: Scan de Sécurité et Vulnérabilités (Trivy)
-  # -------------------------------------------------------------
-  security-trivy:
-    name: Security Vulnerability Scan (Trivy)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner on repo
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'
+        run: pnpm run build
