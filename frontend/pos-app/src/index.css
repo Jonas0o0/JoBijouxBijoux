@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  /* Disable pull-to-refresh and rubber-band bounce on mobile/tablet */
+  body {
+    overscroll-behavior-y: none;
+    touch-action: pan-x pan-y;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Custom scrollbars for POS touch screens */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.5);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.8);
+  }
+}
+
+/* Print styles for receipts and police book export */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
