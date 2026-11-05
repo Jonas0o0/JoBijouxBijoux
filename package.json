@@ -6,6 +6,8 @@
   "packageManager": "pnpm@9.12.0",
   "scripts": {
     "dev": "turbo run dev",
+    "pos:dev": "pnpm --filter @erp-bijoux/pos-app dev",
+    "pos:build": "pnpm --filter @erp-bijoux/pos-app build",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
