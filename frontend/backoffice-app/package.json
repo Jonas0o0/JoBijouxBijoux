@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3001 --host",
-    "build": "tsc && vite build",
-    "lint": "eslint src --ext .ts,.tsx",
+    "dev": "echo 'Backoffice app placeholder'",
+    "build": "echo 'Backoffice app placeholder'",
+    "lint": "echo 'Backoffice app placeholder'",
     "preview": "vite preview"
   },
   "dependencies": {

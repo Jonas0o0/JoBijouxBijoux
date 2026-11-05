@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class PoliceBookService {
@@ -136,11 +137,11 @@ public class PoliceBookService {
                     .append(escapeCsv(e.getSellerFullName())).append(";")
                     .append(escapeCsv(e.getSellerCniPassport())).append(";")
                     .append(escapeCsv(e.getSellerAddress() != null ? e.getSellerAddress() : "")).append(";")
-                    .append(String.format("%.2f", e.getPurchasePriceCents() / 100.0)).append(";")
+                    .append(String.format(Locale.FRANCE, "%.2f", e.getPurchasePriceCents() / 100.0)).append(";")
                     .append(e.getExitDate() != null ? DATE_FORMATTER.format(e.getExitDate()) : "").append(";")
                     .append(escapeCsv(e.getExitTicketNumber() != null ? e.getExitTicketNumber() : "")).append(";")
                     .append(escapeCsv(e.getExitReason() != null ? e.getExitReason() : "")).append(";")
-                    .append(e.getExitPriceCents() != null ? String.format("%.2f", e.getExitPriceCents() / 100.0) : "").append(";")
+                    .append(e.getExitPriceCents() != null ? String.format(Locale.FRANCE, "%.2f", e.getExitPriceCents() / 100.0) : "").append(";")
                     .append(e.getCurrentHash()).append(";")
                     .append(e.getSignature()).append("\n");
         }
