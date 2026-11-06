@@ -34,10 +34,10 @@
     <modules>
         <module>core</module>
         <module>catalog</module>
+        <module>workshop</module>
         <module>pos</module>
         <module>police-book</module>
         <module>gold</module>
-        <module>workshop</module>
         <module>weight-account</module>
         <module>crm</module>
         <module>api-public</module>

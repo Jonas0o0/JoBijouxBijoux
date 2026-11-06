@@ -4,6 +4,7 @@ import fr.bijoux.erp.pos.domain.model.FiscalClosure;
 import fr.bijoux.erp.pos.domain.service.CheckoutService;
 import fr.bijoux.erp.pos.domain.service.FiscalClosureService;
 import fr.bijoux.erp.pos.dto.CartValidationResult;
+import fr.bijoux.erp.pos.dto.CheckoutRepairRequest;
 import fr.bijoux.erp.pos.dto.CheckoutRequest;
 import fr.bijoux.erp.pos.dto.CheckoutResponse;
 import fr.bijoux.erp.pos.dto.FiscalClosureDto;
@@ -28,6 +29,12 @@ public class PosController {
     @PostMapping("/checkout")
     public ResponseEntity<CheckoutResponse> checkout(@Valid @RequestBody CheckoutRequest request) {
         CheckoutResponse response = checkoutService.processCheckout(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/checkout/repair")
+    public ResponseEntity<CheckoutResponse> checkoutRepair(@Valid @RequestBody CheckoutRepairRequest request) {
+        CheckoutResponse response = checkoutService.checkoutRepair(request);
         return ResponseEntity.ok(response);
     }
 

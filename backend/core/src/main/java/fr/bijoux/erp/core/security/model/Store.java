@@ -1,5 +1,6 @@
 package fr.bijoux.erp.core.security.model;
 
+import fr.bijoux.erp.core.tenant.model.Tenant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -62,6 +63,10 @@ public class Store {
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -73,6 +78,11 @@ public class Store {
         this.name = name;
         this.createdAt = Instant.now();
         this.active = true;
+    }
+
+    public Store(String code, String name, Tenant tenant) {
+        this(code, name);
+        this.tenant = tenant;
     }
 
     public Long getId() {
@@ -161,6 +171,22 @@ public class Store {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Tenant getTenant() {
+        return tenant;
+    }
+
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant;
+    }
+
+    public Long getTenantId() {
+        return tenant != null ? tenant.getId() : null;
+    }
+
+    public String getTenantCode() {
+        return tenant != null ? tenant.getCode() : null;
     }
 
     public Instant getCreatedAt() {

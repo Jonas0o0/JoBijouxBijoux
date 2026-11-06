@@ -10,6 +10,7 @@ import fr.bijoux.erp.pos.domain.model.PosTicketStatus;
 import fr.bijoux.erp.pos.domain.service.CheckoutService;
 import fr.bijoux.erp.pos.domain.service.FiscalClosureService;
 import fr.bijoux.erp.pos.dto.CartValidationResult;
+import fr.bijoux.erp.pos.dto.CheckoutRepairRequest;
 import fr.bijoux.erp.pos.dto.CheckoutRequest;
 import fr.bijoux.erp.pos.dto.CheckoutResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -198,5 +199,41 @@ class PosControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.closureType").value("INTERIM_X"))
                 .andExpect(jsonPath("$.totalTtcCents").value(250000));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/pos/checkout/repair - Doit encaisser une réparation SAV avec déduction acompte")
+    void shouldCheckoutRepair() throws Exception {
+        CheckoutRepairRequest request = new CheckoutRepairRequest(
+                12L,
+                1L,
+                "vendeur1",
+                42L,
+                List.of(new CheckoutRequest.PaymentDto(PaymentMethod.CARD, 8_000L, null, "TPE-123", null, null))
+        );
+
+        CheckoutResponse response = new CheckoutResponse(
+                101L,
+                "TKT-1-000101",
+                1L,
+                8_000L,
+                6_667L,
+                1_333L,
+                0L,
+                PosTicketStatus.COMPLETED,
+                "SEALED_HASH_SIGNATURE",
+                Instant.now(),
+                List.of(new CheckoutResponse.PaymentSummaryDto("CARD", 8_000L, "TX_1", "APPROVED"))
+        );
+
+        when(checkoutService.checkoutRepair(any(CheckoutRepairRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/pos/checkout/repair")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ticketNumber").value("TKT-1-000101"))
+                .andExpect(jsonPath("$.totalTtcCents").value(8000))
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 }

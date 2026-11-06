@@ -42,4 +42,10 @@ public class WorkshopController {
         RepairOrderResponse response = workshopService.updateRepairStatus(id, request);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/orders/{id}/invoice")
+    public ResponseEntity<RepairInvoiceDto> getRepairInvoice(@PathVariable Long id) {
+        RepairInvoiceDto invoice = workshopService.prepareRepairInvoice(id);
+        return ResponseEntity.ok(invoice);
+    }
 }

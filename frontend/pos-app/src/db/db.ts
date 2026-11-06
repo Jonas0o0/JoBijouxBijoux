@@ -63,6 +63,12 @@ export interface SaleRecord {
   status: "COMPLETED" | "CANCELLED" | "REFUNDED";
   fiscalHash: string; // Chained SHA256 simulation NF525
   synchronized: boolean;
+  regimeType?: "STANDARD" | "MARGE_OCCASION";
+  marginDetails?: {
+    purchaseCost: number;
+    marginHT: number;
+    vatAmount: number;
+  };
 }
 
 export interface GoldBuybackRecord {
@@ -173,6 +179,75 @@ export interface CustomerRecord {
   createdAt: string;
 }
 
+export interface SupplierOrderItem {
+  productId?: string;
+  reference: string;
+  name: string;
+  category: "bague" | "collier" | "bracelet" | "boucles" | "montre" | "service" | "matiere";
+  quantity: number;
+  receivedQuantity?: number;
+  unitCostHT: number;
+  vatRate: number; // e.g. 0.20 or 0.0 (intra-EU reverse charge)
+  totalHT: number;
+  metalType?: "or_jaune" | "or_blanc" | "or_rose" | "platine" | "argent" | "acier";
+  goldCarats?: "24k" | "18k" | "14k" | "9k";
+  weightGrams?: number;
+  diamond4C?: {
+    carat: number;
+    color: string;
+    clarity: string;
+    cut: string;
+  };
+}
+
+export interface SupplierOrderRecord {
+  id: string;
+  orderNumber: string;
+  supplierName: string;
+  supplierContact?: string;
+  supplierCountry?: string;
+  status: "BROUILLON" | "COMMANDEE" | "RECEPTIONNEE";
+  items: SupplierOrderItem[];
+  totalHT: number;
+  totalVAT: number;
+  totalTTC: number;
+  targetStockLocation?: "VITRINE" | "COFFRE";
+  notes?: string;
+  createdAt: string;
+  orderedAt?: string;
+  receivedAt?: string;
+}
+
+export interface FiscalClosureRecord {
+  id: string;
+  closureType: "Z_JOURNALIER" | "M_MENSUEL" | "A_ANNUEL";
+  closureNumber: string;
+  periodStart: string;
+  periodEnd: string;
+  openingBalance: number;
+  closingBalance: number;
+  totalHT: number;
+  totalTTC: number;
+  vatNormal20HT: number;
+  vatNormal20Amount: number;
+  vatMarginBaseHT: number;
+  vatMarginAmount: number;
+  totalVAT: number;
+  paymentsBreakdown: {
+    cb: number;
+    cash: number;
+    transfer: number;
+    check: number;
+    voucher: number;
+  };
+  transactionsCount: number;
+  firstTicketRef: string;
+  lastTicketRef: string;
+  previousSignatureHash: string;
+  fiscalSignatureHash: string; // NF525 chained SHA-256
+  createdAt: string;
+}
+
 class ERPBijouxDatabase extends Dexie {
   products!: EntityTable<ProductItem, "id">;
   sales!: EntityTable<SaleRecord, "id">;
@@ -180,6 +255,8 @@ class ERPBijouxDatabase extends Dexie {
   repairs!: EntityTable<RepairItem, "id">;
   policeBook!: EntityTable<PoliceBookEntry, "id">;
   customers!: EntityTable<CustomerRecord, "id">;
+  supplierOrders!: EntityTable<SupplierOrderRecord, "id">;
+  fiscalClosures!: EntityTable<FiscalClosureRecord, "id">;
 
   constructor() {
     super("ERPBijouxPOSDB_v2");
@@ -192,6 +269,10 @@ class ERPBijouxDatabase extends Dexie {
     });
     this.version(2).stores({
       customers: "id, lastName, firstName, phone, email, vipTier",
+    });
+    this.version(3).stores({
+      supplierOrders: "id, orderNumber, supplierName, status, createdAt",
+      fiscalClosures: "id, closureNumber, closureType, createdAt",
     });
   }
 }

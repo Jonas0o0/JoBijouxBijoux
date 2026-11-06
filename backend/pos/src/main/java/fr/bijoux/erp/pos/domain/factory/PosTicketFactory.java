@@ -25,12 +25,24 @@ public class PosTicketFactory {
             int lineNumber,
             PosItemType itemType,
             Long jewelryItemId,
+            Long repairOrderId,
             String designation,
             int quantity,
             long unitPriceTtcCents,
             VatRegime vatRegime,
             Long purchasePriceHtCents
-    ) {}
+    ) {
+        public LineBlueprint(int lineNumber,
+                             PosItemType itemType,
+                             Long jewelryItemId,
+                             String designation,
+                             int quantity,
+                             long unitPriceTtcCents,
+                             VatRegime vatRegime,
+                             Long purchasePriceHtCents) {
+            this(lineNumber, itemType, jewelryItemId, null, designation, quantity, unitPriceTtcCents, vatRegime, purchasePriceHtCents);
+        }
+    }
 
     public PosTicket createTicket(
             String ticketNumber,
@@ -68,6 +80,7 @@ public class PosTicketFactory {
                     bp.lineNumber(),
                     bp.itemType() != null ? bp.itemType() : PosItemType.CATALOG_ITEM,
                     bp.jewelryItemId(),
+                    bp.repairOrderId(),
                     bp.designation(),
                     bp.quantity(),
                     bp.unitPriceTtcCents(),

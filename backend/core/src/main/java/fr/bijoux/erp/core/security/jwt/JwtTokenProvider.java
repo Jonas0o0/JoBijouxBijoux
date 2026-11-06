@@ -38,6 +38,13 @@ public class JwtTokenProvider {
      * Génère un token JWT signé avec les rôles et le magasin rattaché.
      */
     public String generateToken(String username, Set<Role> roles, Long storeId) {
+        return generateToken(username, roles, storeId, null);
+    }
+
+    /**
+     * Génère un token JWT signé avec les rôles, le magasin et le tenant rattachés.
+     */
+    public String generateToken(String username, Set<Role> roles, Long storeId, String tenantId) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
 
@@ -54,6 +61,10 @@ public class JwtTokenProvider {
 
         if (storeId != null) {
             builder.claim("storeId", storeId);
+        }
+
+        if (tenantId != null && !tenantId.isBlank()) {
+            builder.claim("tenantId", tenantId);
         }
 
         return builder.compact();
@@ -87,6 +98,14 @@ public class JwtTokenProvider {
         Object storeIdObj = getClaims(token).get("storeId");
         if (storeIdObj instanceof Number number) {
             return number.longValue();
+        }
+        return null;
+    }
+
+    public String getTenantId(String token) {
+        Object tenantIdObj = getClaims(token).get("tenantId");
+        if (tenantIdObj != null) {
+            return tenantIdObj.toString();
         }
         return null;
     }

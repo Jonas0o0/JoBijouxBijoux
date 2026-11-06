@@ -17,12 +17,15 @@ public interface PosTicketRepository extends JpaRepository<PosTicket, Long> {
 
     Optional<PosTicket> findTopByStoreIdOrderByCreatedAtDescIdDesc(Long storeId);
 
-    @Query("SELECT t FROM PosTicket t WHERE t.storeId = :storeId AND t.createdAt >= :startDate AND t.createdAt < :endDate AND t.status = 'COMPLETED'")
+    @Query("SELECT t FROM PosTicket t WHERE t.storeId = :storeId AND t.createdAt >= :startDate AND t.createdAt <= :endDate AND t.status = 'COMPLETED' ORDER BY t.createdAt ASC")
     List<PosTicket> findCompletedTicketsBetween(
             @Param("storeId") Long storeId,
             @Param("startDate") Instant startDate,
             @Param("endDate") Instant endDate
     );
+
+    @Query("SELECT t FROM PosTicket t WHERE t.storeId = :storeId AND t.status = 'COMPLETED' ORDER BY t.createdAt ASC")
+    List<PosTicket> findCompletedTicketsByStore(@Param("storeId") Long storeId);
 
     @Query("SELECT COUNT(t) FROM PosTicket t WHERE t.storeId = :storeId")
     long countByStoreId(@Param("storeId") Long storeId);

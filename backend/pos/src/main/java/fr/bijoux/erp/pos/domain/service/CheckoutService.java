@@ -5,14 +5,19 @@ import fr.bijoux.erp.core.audit.service.FiscalSealingEngine;
 import fr.bijoux.erp.core.event.SaleCompletedEvent;
 import fr.bijoux.erp.pos.domain.factory.PosTicketFactory;
 import fr.bijoux.erp.pos.domain.model.PaymentTransaction;
+import fr.bijoux.erp.pos.domain.model.PosItemType;
 import fr.bijoux.erp.pos.domain.model.PosTicket;
 import fr.bijoux.erp.pos.domain.repository.PosTicketRepository;
 import fr.bijoux.erp.pos.domain.strategy.PaymentContext;
 import fr.bijoux.erp.pos.domain.strategy.PaymentResult;
 import fr.bijoux.erp.pos.domain.strategy.PaymentStrategyRegistry;
 import fr.bijoux.erp.pos.dto.CartValidationResult;
+import fr.bijoux.erp.pos.dto.CheckoutRepairRequest;
 import fr.bijoux.erp.pos.dto.CheckoutRequest;
 import fr.bijoux.erp.pos.dto.CheckoutResponse;
+import fr.bijoux.erp.workshop.domain.service.WorkshopService;
+import fr.bijoux.erp.workshop.dto.RepairInvoiceDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -33,6 +38,7 @@ public class CheckoutService {
     private final VatCalculationService vatCalculationService;
     private final FiscalSealingEngine sealingEngine;
     private final ApplicationEventPublisher eventPublisher;
+    private final WorkshopService workshopService;
 
     @Value("${erp.fiscal.sealing-secret:TESTING_FISCAL_SEALING_KEY_NF525}")
     private String sealingSecret;
@@ -43,12 +49,25 @@ public class CheckoutService {
                            VatCalculationService vatCalculationService,
                            FiscalSealingEngine sealingEngine,
                            ApplicationEventPublisher eventPublisher) {
+        this(ticketRepository, ticketFactory, paymentStrategyRegistry, vatCalculationService, sealingEngine, eventPublisher, null);
+    }
+
+    @Autowired
+    public CheckoutService(PosTicketRepository ticketRepository,
+                           PosTicketFactory ticketFactory,
+                           PaymentStrategyRegistry paymentStrategyRegistry,
+                           VatCalculationService vatCalculationService,
+                           FiscalSealingEngine sealingEngine,
+                           ApplicationEventPublisher eventPublisher,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false)
+                           WorkshopService workshopService) {
         this.ticketRepository = ticketRepository;
         this.ticketFactory = ticketFactory;
         this.paymentStrategyRegistry = paymentStrategyRegistry;
         this.vatCalculationService = vatCalculationService;
         this.sealingEngine = sealingEngine;
         this.eventPublisher = eventPublisher;
+        this.workshopService = workshopService;
     }
 
     public CartValidationResult validateCart(List<CheckoutRequest.CartLineDto> lines) {
@@ -115,6 +134,7 @@ public class CheckoutService {
                         l.lineNumber(),
                         l.itemType(),
                         l.jewelryItemId(),
+                        l.repairOrderId(),
                         l.designation(),
                         l.quantity(),
                         l.unitPriceTtcCents(),
@@ -185,6 +205,19 @@ public class CheckoutService {
 
         PosTicket savedTicket = ticketRepository.save(ticket);
 
+        // Clôture des réparations SAV associées le cas échéant
+        if (workshopService != null) {
+            for (CheckoutRequest.CartLineDto line : request.lines()) {
+                if (line.repairOrderId() != null) {
+                    try {
+                        workshopService.markDeliveredAndInvoiced(line.repairOrderId());
+                    } catch (Exception ex) {
+                        // Log d'avertissement si la fiche n'a pas pu être mise à jour
+                    }
+                }
+            }
+        }
+
         // Publication de l'événement Spring Modulith SaleCompletedEvent
         List<SaleCompletedEvent.SaleLineItem> eventLines = request.lines().stream()
                 .map(l -> new SaleCompletedEvent.SaleLineItem(
@@ -226,5 +259,60 @@ public class CheckoutService {
                 savedTicket.getCreatedAt(),
                 paymentSummaries
         );
+    }
+
+    /**
+     * Encaissement spécifique d'une réparation SAV au comptoir de vente :
+     * Impute l'acompte déjà versé lors du dépôt, émet le ticket scellé NF525
+     * et clôture l'ordre de réparation en statut LIVRE_ET_FACTURE.
+     */
+    @Transactional
+    public CheckoutResponse checkoutRepair(CheckoutRepairRequest request) {
+        if (workshopService == null) {
+            throw new IllegalStateException("Le module WorkshopService n'est pas disponible pour l'encaissement SAV");
+        }
+
+        RepairInvoiceDto invoice = workshopService.prepareRepairInvoice(request.repairOrderId());
+        long balanceDue = invoice.remainingBalanceCents();
+
+        long totalPaid = request.payments().stream()
+                .mapToLong(CheckoutRequest.PaymentDto::amountCents)
+                .sum();
+
+        if (totalPaid < balanceDue) {
+            throw new IllegalArgumentException(String.format(
+                    "Montant total réglé (%.2f €) inférieur au solde restant dû de la réparation (%.2f €)",
+                    totalPaid / 100.0, balanceDue / 100.0
+            ));
+        }
+
+        String designation = "Réparation SAV " + invoice.orderNumber() + " - " + invoice.itemDescription();
+        if (invoice.depositPaidCents() != null && invoice.depositPaidCents() > 0) {
+            designation += String.format(java.util.Locale.FRANCE, " (Acompte déduit : %.2f €)", invoice.depositPaidCents() / 100.0);
+        }
+
+        CheckoutRequest.CartLineDto repairLine = new CheckoutRequest.CartLineDto(
+                1,
+                PosItemType.REPAIR_SERVICE,
+                null,
+                request.repairOrderId(),
+                designation,
+                1,
+                balanceDue,
+                VatRegime.STANDARD_20,
+                null,
+                false,
+                invoice.depositPaidCents()
+        );
+
+        CheckoutRequest checkoutReq = new CheckoutRequest(
+                request.storeId(),
+                request.operatorUsername(),
+                request.customerId() != null ? request.customerId() : invoice.customerId(),
+                List.of(repairLine),
+                request.payments()
+        );
+
+        return processCheckout(checkoutReq);
     }
 }

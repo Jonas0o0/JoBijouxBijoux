@@ -346,6 +346,11 @@ export function PosScreen() {
                         <div>
                           <h5 className="text-xs font-bold text-slate-900">{item.name}</h5>
                           <span className="text-[10px] text-slate-400 font-mono">Ref: {item.reference}</span>
+                          {item.customNotes && (
+                            <p className="text-[10px] text-amber-900 bg-amber-50/90 px-2 py-0.5 rounded-md border border-amber-200 mt-1 font-medium leading-relaxed">
+                              {item.customNotes}
+                            </p>
+                          )}
                         </div>
                         <span className="text-xs font-black text-slate-900 font-mono whitespace-nowrap">
                           {formatCurrency(item.totalTTC)}

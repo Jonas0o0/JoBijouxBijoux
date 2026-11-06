@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -48,6 +49,12 @@ public class WorkshopService {
                 request.estimatedQuoteCents()
         );
         order.setCustomerNotes(request.customerNotes());
+        if (request.depositPaidCents() != null) {
+            order.setDepositPaidCents(request.depositPaidCents());
+        }
+        if (request.laborCostCents() != null) {
+            order.setLaborCostCents(request.laborCostCents());
+        }
 
         RepairOrder saved = repairOrderRepository.save(order);
         return RepairOrderResponse.fromEntity(saved);
@@ -169,5 +176,95 @@ public class WorkshopService {
         return repairOrderRepository.findByStoreIdOrderByCreatedAtDesc(storeId).stream()
                 .map(RepairOrderResponse::fromEntity)
                 .toList();
+    }
+
+    /**
+     * Prépare le décompte de facturation d'une réparation SAV :
+     * Calcule le solde restant dû (coût total - acompte versé),
+     * liste la main d'œuvre (façon joaillière) et les fournitures (or/pierres/rhodiage).
+     */
+    @Transactional(readOnly = true)
+    public RepairInvoiceDto prepareRepairInvoice(Long repairOrderId) {
+        RepairOrder order = repairOrderRepository.findById(repairOrderId)
+                .orElseThrow(() -> new IllegalArgumentException("Fiche de réparation introuvable id=" + repairOrderId));
+
+        List<RepairInvoiceDto.SupplyDetailDto> supplies = new ArrayList<>();
+        long totalSuppliesCents = 0L;
+
+        if (order.getComponents() != null) {
+            for (WorkshopComponent comp : order.getComponents()) {
+                long lineTotal = comp.getUnitCostCents() * comp.getQuantity();
+                totalSuppliesCents += lineTotal;
+                supplies.add(new RepairInvoiceDto.SupplyDetailDto(
+                        comp.getComponentName(),
+                        comp.getQuantity(),
+                        comp.getUnitCostCents(),
+                        lineTotal
+                ));
+            }
+        }
+
+        // Main d'œuvre (façon joaillière)
+        long laborCents;
+        if (order.getLaborCostCents() != null && order.getLaborCostCents() > 0) {
+            laborCents = order.getLaborCostCents();
+        } else if (order.getFinalPriceCents() != null && order.getFinalPriceCents() > totalSuppliesCents) {
+            laborCents = order.getFinalPriceCents() - totalSuppliesCents;
+        } else if (order.getEstimatedQuoteCents() != null && order.getEstimatedQuoteCents() > totalSuppliesCents) {
+            laborCents = order.getEstimatedQuoteCents() - totalSuppliesCents;
+        } else {
+            laborCents = order.getLaborCostCents() != null ? order.getLaborCostCents() : 0L;
+        }
+
+        // Coût total de la réparation
+        long totalCostCents;
+        if (order.getFinalPriceCents() != null && order.getFinalPriceCents() > 0) {
+            totalCostCents = order.getFinalPriceCents();
+        } else if (order.getEstimatedQuoteCents() != null && order.getEstimatedQuoteCents() > 0) {
+            totalCostCents = order.getEstimatedQuoteCents();
+        } else {
+            totalCostCents = laborCents + totalSuppliesCents;
+        }
+
+        long depositPaidCents = order.getDepositPaidCents() != null ? order.getDepositPaidCents() : 0L;
+        long remainingBalanceCents = Math.max(0L, totalCostCents - depositPaidCents);
+
+        RepairInvoiceDto.LaborDetailDto labor = new RepairInvoiceDto.LaborDetailDto(
+                "Façon joaillière & main d'œuvre atelier",
+                laborCents
+        );
+
+        return new RepairInvoiceDto(
+                order.getId(),
+                order.getOrderNumber(),
+                order.getStoreId(),
+                order.getCustomerId(),
+                order.getItemDescription(),
+                order.getMetalType(),
+                order.getFineness(),
+                order.getGrossWeightGrams(),
+                totalCostCents,
+                depositPaidCents,
+                remainingBalanceCents,
+                labor,
+                supplies,
+                order.getStatus().name(),
+                Instant.now()
+        );
+    }
+
+    /**
+     * Marque la réparation comme LIVRE_ET_FACTURE suite à l'encaissement en caisse.
+     */
+    @Transactional
+    public RepairOrder markDeliveredAndInvoiced(Long repairOrderId) {
+        RepairOrder order = repairOrderRepository.findById(repairOrderId)
+                .orElseThrow(() -> new IllegalArgumentException("Fiche de réparation introuvable id=" + repairOrderId));
+
+        order.setStatus(WorkshopStatus.LIVRE_ET_FACTURE);
+        order.setActualDeliveryDate(Instant.now());
+        order.setUpdatedAt(Instant.now());
+
+        return repairOrderRepository.save(order);
     }
 }

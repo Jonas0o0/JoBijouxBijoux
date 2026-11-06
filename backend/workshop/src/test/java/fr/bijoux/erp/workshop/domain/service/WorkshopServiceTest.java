@@ -2,11 +2,13 @@ package fr.bijoux.erp.workshop.domain.service;
 
 import fr.bijoux.erp.workshop.domain.model.CustomManufacturingOrder;
 import fr.bijoux.erp.workshop.domain.model.RepairOrder;
+import fr.bijoux.erp.workshop.domain.model.WorkshopComponent;
 import fr.bijoux.erp.workshop.domain.model.WorkshopStatus;
 import fr.bijoux.erp.workshop.domain.repository.CustomManufacturingOrderRepository;
 import fr.bijoux.erp.workshop.domain.repository.RepairOrderRepository;
 import fr.bijoux.erp.workshop.dto.CreateCustomOrderRequest;
 import fr.bijoux.erp.workshop.dto.CreateRepairOrderRequest;
+import fr.bijoux.erp.workshop.dto.RepairInvoiceDto;
 import fr.bijoux.erp.workshop.dto.RepairOrderResponse;
 import fr.bijoux.erp.workshop.dto.WorkshopStatusUpdateRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -134,5 +136,62 @@ class WorkshopServiceTest {
         assertThatThrownBy(() -> workshopService.calculateNetWeightAfterFireLoss(new BigDecimal("20.000"), new BigDecimal("8.50")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("compris entre 3.00% et 8.00%");
+    }
+
+    @Test
+    @DisplayName("Facturation SAV : Doit préparer la facture avec décompte façon joaillière, fournitures et acompte")
+    void shouldPrepareRepairInvoiceWithDepositDeducted() {
+        RepairOrder order = new RepairOrder(
+                "REP-1-000005", 1L, 42L, "artisan_jean",
+                "Solitaire or blanc avec serti griffe et rhodiage", "OR_BLANC", "750‰",
+                new BigDecimal("4.200"), null, 18_000L
+        );
+        order.setId(5L);
+        order.setDepositPaidCents(5_000L); // 50,00 € d'acompte déjà versé
+
+        // Ajout de fournitures
+        WorkshopComponent supply1 = new WorkshopComponent("Bain de rhodiage électrolytique", 1, 3_000L);
+        WorkshopComponent supply2 = new WorkshopComponent("Or blanc 750 (apport soudure)", 1, 2_000L);
+        order.addComponent(supply1);
+        order.addComponent(supply2);
+
+        when(repairOrderRepository.findById(5L)).thenReturn(Optional.of(order));
+
+        RepairInvoiceDto invoice = workshopService.prepareRepairInvoice(5L);
+
+        assertThat(invoice.repairOrderId()).isEqualTo(5L);
+        assertThat(invoice.orderNumber()).isEqualTo("REP-1-000005");
+        assertThat(invoice.totalCostCents()).isEqualTo(18_000L);
+        assertThat(invoice.depositPaidCents()).isEqualTo(5_000L);
+        // Solde restant dû : 180€ - 50€ = 130€ (13 000 cents)
+        assertThat(invoice.remainingBalanceCents()).isEqualTo(13_000L);
+
+        // Vérification des fournitures
+        assertThat(invoice.supplies()).hasSize(2);
+        long suppliesTotal = invoice.supplies().stream().mapToLong(RepairInvoiceDto.SupplyDetailDto::totalCostCents).sum();
+        assertThat(suppliesTotal).isEqualTo(5_000L);
+
+        // Main d'œuvre (façon joaillière) : 180€ - 50€ fournitures = 130€ façon
+        assertThat(invoice.labor().amountCents()).isEqualTo(13_000L);
+    }
+
+    @Test
+    @DisplayName("SAV : Doit marquer la réparation comme LIVRE_ET_FACTURE suite à l'encaissement")
+    void shouldMarkRepairAsDeliveredAndInvoiced() {
+        RepairOrder order = new RepairOrder(
+                "REP-1-000007", 1L, 42L, "artisan_jean",
+                "Pendentif saphir", "OR_JAUNE", "750‰",
+                new BigDecimal("2.500"), null, 8_000L
+        );
+        order.setId(7L);
+        order.setStatus(WorkshopStatus.PRET_RETRAIT);
+
+        when(repairOrderRepository.findById(7L)).thenReturn(Optional.of(order));
+        when(repairOrderRepository.save(any(RepairOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RepairOrder updated = workshopService.markDeliveredAndInvoiced(7L);
+
+        assertThat(updated.getStatus()).isEqualTo(WorkshopStatus.LIVRE_ET_FACTURE);
+        assertThat(updated.getActualDeliveryDate()).isNotNull();
     }
 }

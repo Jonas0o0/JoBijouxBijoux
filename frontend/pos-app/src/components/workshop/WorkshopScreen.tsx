@@ -6,9 +6,11 @@ import {
   ArrowRight,
   Eye,
   CheckCircle,
+  ShoppingBag,
 } from "lucide-react";
-import { db, type RepairItem } from "../../db/db";
+import { db, type RepairItem, type ProductItem } from "../../db/db";
 import { useUserStore } from "../../store/useUserStore";
+import { usePosStore } from "../../store/usePosStore";
 import { JewelryInspectionCanvas, type InspectionAnnotation } from "./JewelryInspectionCanvas";
 import { Modal } from "@erp-bijoux/shared-ui";
 import { formatCurrency, formatDateOnly } from "@erp-bijoux/shared-ui";
@@ -26,8 +28,13 @@ const KANBAN_COLUMNS: Array<{
   { status: "LIVRE", label: "Restitué au client", badgeClass: "bg-purple-50 text-purple-800", dotColor: "#9333ea" },
 ];
 
-export function WorkshopScreen() {
+interface WorkshopScreenProps {
+  onNavigateToPos?: () => void;
+}
+
+export function WorkshopScreen({ onNavigateToPos }: WorkshopScreenProps) {
   const { storeInfo } = useUserStore();
+  const { addToCart, updateItemNotes, setCustomer } = usePosStore();
   const [repairs, setRepairs] = useState<RepairItem[]>([]);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
   const [selectedTicketForPrint, setSelectedTicketForPrint] = useState<RepairItem | null>(null);
@@ -59,6 +66,52 @@ export function WorkshopScreen() {
   const handleUpdateStatus = async (ticketId: string, nextStatus: RepairItem["status"]) => {
     await db.repairs.update(ticketId, { status: nextStatus });
     await loadRepairs();
+  };
+
+  // Transfer SAV repair to POS cart and close SAV
+  const handleInvoiceAndCloseSav = async (repair: RepairItem) => {
+    const totalCost = repair.estimatedCost || 0;
+    const deposit = repair.depositPaid || 0;
+    const balanceDue = Math.max(0, totalCost - deposit);
+
+    const savProduct: ProductItem = {
+      id: `sav-${repair.id}`,
+      reference: repair.ticketNumber,
+      barcode: `SAV${repair.ticketNumber.replace(/[^0-9]/g, "")}`,
+      name: `Prestation SAV • ${repair.ticketNumber} (${repair.description})`,
+      category: "service",
+      priceTTC: balanceDue,
+      vatRate: 0.2,
+      stockVitrine: 999,
+      stockCoffre: 999,
+      isQuickService: true,
+    };
+
+    // Add to cart
+    addToCart(savProduct, 1);
+
+    // Add detailed notes for cash register and receipt
+    const noteText = `Devis initial : ${formatCurrency(totalCost)} | Acompte versé au dépôt : -${formatCurrency(deposit)} | Solde net à régler : ${formatCurrency(balanceDue)} (${repair.repairDetails})`;
+    updateItemNotes(savProduct.id, noteText);
+
+    // Set Customer in POS
+    setCustomer({
+      id: repair.customerId,
+      name: repair.customerName,
+      phone: repair.customerPhone,
+    });
+
+    // Mark repair as LIVRE in Dexie
+    await db.repairs.update(repair.id, {
+      status: "LIVRE",
+    });
+
+    await loadRepairs();
+
+    // Seamlessly navigate to POS register screen
+    if (onNavigateToPos) {
+      onNavigateToPos();
+    }
   };
 
   // Create new repair ticket
@@ -192,7 +245,7 @@ export function WorkshopScreen() {
                           <span>Ticket</span>
                         </button>
 
-                        {col.status !== "LIVRE" && (
+                        {col.status !== "LIVRE" && col.status !== "TERMINE_AU_COFFRE" && (
                           <button
                             onClick={() => {
                               const currentIndex = KANBAN_COLUMNS.findIndex((c) => c.status === col.status);
@@ -207,6 +260,36 @@ export function WorkshopScreen() {
                           </button>
                         )}
                       </div>
+
+                      {/* Prominent Action for TERMINE_AU_COFFRE: Facturer & Clôturer SAV */}
+                      {col.status === "TERMINE_AU_COFFRE" && (
+                        <div className="pt-2 border-t border-slate-100 space-y-2">
+                          <div className="bg-emerald-50/80 p-2 rounded-xl text-[10px] text-emerald-900 border border-emerald-200/90 space-y-0.5">
+                            <div className="flex justify-between">
+                              <span className="text-emerald-700">Devis total :</span>
+                              <span className="font-mono font-bold">{formatCurrency(repair.estimatedCost)}</span>
+                            </div>
+                            <div className="flex justify-between text-emerald-700">
+                              <span>Acompte déjà versé :</span>
+                              <span className="font-mono">-{formatCurrency(repair.depositPaid || 0)}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-xs pt-1 border-t border-emerald-200 text-emerald-950">
+                              <span>Solde restant dû :</span>
+                              <span className="font-mono font-black text-amber-800">
+                                {formatCurrency(Math.max(0, repair.estimatedCost - (repair.depositPaid || 0)))}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleInvoiceAndCloseSav(repair)}
+                            className="w-full py-2 px-3 bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs hover:shadow-sm transition-all active:scale-95"
+                          >
+                            <ShoppingBag className="w-4 h-4 text-amber-100" />
+                            <span>Facturer & Clôturer SAV</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

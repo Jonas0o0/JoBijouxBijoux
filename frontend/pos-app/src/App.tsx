@@ -7,6 +7,9 @@ import {
   Wrench,
   BookOpen,
   ArrowRight,
+  Truck,
+  BarChart3,
+  Building2,
 } from "lucide-react";
 import { initDatabaseSeed } from "./db/seed";
 import { useHardwareStore } from "./store/useHardwareStore";
@@ -19,16 +22,29 @@ import { CustomerCrmScreen } from "./components/crm/CustomerCrmScreen";
 import { GoldBuybackScreen } from "./components/gold/GoldBuybackScreen";
 import { WorkshopScreen } from "./components/workshop/WorkshopScreen";
 import { PoliceBookScreen } from "./components/police/PoliceBookScreen";
+import { SupplierOrdersScreen } from "./components/orders/SupplierOrdersScreen";
+import { AccountingScreen } from "./components/accounting/AccountingScreen";
+import { MultiStoreScreen } from "./components/stores/MultiStoreScreen";
+import { LoginScreen } from "./components/auth/LoginScreen";
 import { formatCurrency } from "@erp-bijoux/shared-ui";
 
-export type ActiveScreen = "POS" | "STOCK" | "CRM" | "GOLD" | "WORKSHOP" | "POLICE";
+export type ActiveScreen =
+  | "POS"
+  | "STOCK"
+  | "ORDERS"
+  | "WORKSHOP"
+  | "GOLD"
+  | "CRM"
+  | "POLICE"
+  | "ACCOUNTING"
+  | "STORES";
 
 export function App() {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>("POS");
   const [isDbReady, setIsDbReady] = useState(false);
 
   const { connectScale } = useHardwareStore();
-  const { currentSeller, storeInfo } = useUserStore();
+  const { currentSeller, storeInfo, isAuthenticated, tenant } = useUserStore();
   const { cart, getTotalTTC, customer } = usePosStore();
 
   // Initialize Dexie Seed & Connect Hardware scale stream
@@ -70,23 +86,30 @@ export function App() {
           <p className="text-sm font-bold tracking-tight text-slate-900">
             Initialisation de l'ERP Joaillerie & Base Locale Dexie...
           </p>
-          <p className="text-xs text-slate-500 mt-1">Maison Vendôme Haute Joaillerie</p>
+          <p className="text-xs text-slate-500 mt-1">
+            {tenant?.name || "Maison Vendôme Haute Joaillerie"}
+          </p>
         </div>
       </div>
     );
+  }
+
+  // Not authenticated: render the luxury SaaS LoginScreen
+  if (!isAuthenticated) {
+    return <LoginScreen />;
   }
 
   const totalCartTTC = getTotalTTC();
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-50 text-slate-900 overflow-hidden font-sans select-none">
-      {/* Top Hardware Toolbar (Scale, TPE, Drawer, Device Switcher) */}
+      {/* Top Hardware Toolbar (Scale, TPE, Drawer, Device Switcher, Store Switcher, Lock) */}
       <HardwareToolbar />
 
       {/* Navigation Tabs for All Business Modules */}
       <nav className="bg-white border-b border-slate-200/90 px-4 py-1.5 flex items-center justify-between text-xs z-20 overflow-x-auto shadow-xs">
         <div className="flex items-center gap-1.5">
-          {/* 1. POS */}
+          {/* 1. Caisse (POS) */}
           <button
             onClick={() => setActiveScreen("POS")}
             className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
@@ -115,33 +138,20 @@ export function App() {
             <span>Stock & Catalogue</span>
           </button>
 
-          {/* 3. Clients & Baguier */}
+          {/* 3. Commandes & Réassort */}
           <button
-            onClick={() => setActiveScreen("CRM")}
+            onClick={() => setActiveScreen("ORDERS")}
             className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-              activeScreen === "CRM"
+              activeScreen === "ORDERS"
                 ? "bg-amber-600 text-white shadow-xs"
                 : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
             }`}
           >
-            <Users className={`w-4 h-4 ${activeScreen === "CRM" ? "text-amber-200" : "text-slate-500"}`} />
-            <span>Clients & Baguier</span>
+            <Truck className={`w-4 h-4 ${activeScreen === "ORDERS" ? "text-amber-200" : "text-amber-600"}`} />
+            <span>Commandes & Réassort</span>
           </button>
 
-          {/* 4. Rachat d'Or */}
-          <button
-            onClick={() => setActiveScreen("GOLD")}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-              activeScreen === "GOLD"
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-            }`}
-          >
-            <Scale className={`w-4 h-4 ${activeScreen === "GOLD" ? "text-amber-200" : "text-amber-600"}`} />
-            <span>Rachat d'Or</span>
-          </button>
-
-          {/* 5. Atelier & SAV */}
+          {/* 4. Atelier & SAV */}
           <button
             onClick={() => setActiveScreen("WORKSHOP")}
             className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
@@ -154,7 +164,33 @@ export function App() {
             <span>Atelier & SAV</span>
           </button>
 
-          {/* 6. Livre de Police */}
+          {/* 5. Rachat d'Or */}
+          <button
+            onClick={() => setActiveScreen("GOLD")}
+            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+              activeScreen === "GOLD"
+                ? "bg-amber-600 text-white shadow-xs"
+                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+            }`}
+          >
+            <Scale className={`w-4 h-4 ${activeScreen === "GOLD" ? "text-amber-200" : "text-amber-600"}`} />
+            <span>Rachat d'Or</span>
+          </button>
+
+          {/* 6. Clients & Baguier */}
+          <button
+            onClick={() => setActiveScreen("CRM")}
+            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+              activeScreen === "CRM"
+                ? "bg-amber-600 text-white shadow-xs"
+                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+            }`}
+          >
+            <Users className={`w-4 h-4 ${activeScreen === "CRM" ? "text-amber-200" : "text-slate-500"}`} />
+            <span>Clients & Baguier</span>
+          </button>
+
+          {/* 7. Livre de Police */}
           <button
             onClick={() => setActiveScreen("POLICE")}
             className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
@@ -165,6 +201,32 @@ export function App() {
           >
             <BookOpen className={`w-4 h-4 ${activeScreen === "POLICE" ? "text-amber-200" : "text-slate-500"}`} />
             <span>Livre de Police</span>
+          </button>
+
+          {/* 8. Comptabilité & Clôtures */}
+          <button
+            onClick={() => setActiveScreen("ACCOUNTING")}
+            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+              activeScreen === "ACCOUNTING"
+                ? "bg-amber-600 text-white shadow-xs"
+                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+            }`}
+          >
+            <BarChart3 className={`w-4 h-4 ${activeScreen === "ACCOUNTING" ? "text-amber-200" : "text-slate-500"}`} />
+            <span>Comptabilité & Clôtures</span>
+          </button>
+
+          {/* 9. Réseau Magasins & Transferts */}
+          <button
+            onClick={() => setActiveScreen("STORES")}
+            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+              activeScreen === "STORES"
+                ? "bg-amber-600 text-white shadow-xs"
+                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+            }`}
+          >
+            <Building2 className={`w-4 h-4 ${activeScreen === "STORES" ? "text-amber-200" : "text-amber-600"}`} />
+            <span>🏛️ Réseau Magasins</span>
           </button>
         </div>
 
@@ -227,24 +289,29 @@ export function App() {
       <main className="flex-1 flex overflow-hidden">
         {activeScreen === "POS" && <PosScreen />}
         {activeScreen === "STOCK" && <StockInventoryScreen onNavigateToPos={() => setActiveScreen("POS")} />}
-        {activeScreen === "CRM" && <CustomerCrmScreen onNavigateToPos={() => setActiveScreen("POS")} />}
+        {activeScreen === "ORDERS" && <SupplierOrdersScreen onNavigateToStock={() => setActiveScreen("STOCK")} />}
+        {activeScreen === "WORKSHOP" && <WorkshopScreen onNavigateToPos={() => setActiveScreen("POS")} />}
         {activeScreen === "GOLD" && <GoldBuybackScreen />}
-        {activeScreen === "WORKSHOP" && <WorkshopScreen />}
+        {activeScreen === "CRM" && <CustomerCrmScreen onNavigateToPos={() => setActiveScreen("POS")} />}
         {activeScreen === "POLICE" && <PoliceBookScreen />}
+        {activeScreen === "ACCOUNTING" && <AccountingScreen />}
+        {activeScreen === "STORES" && <MultiStoreScreen onNavigateToPos={() => setActiveScreen("POS")} />}
       </main>
 
       {/* Bottom Legal / Fiscal Watermark Footer */}
       <footer className="bg-white border-t border-slate-200/90 px-4 py-1.5 text-[10px] text-slate-500 flex items-center justify-between z-10 shadow-xs">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>ERPBijoux Cloud & Edge • Thème Joaillerie Haute Précision</span>
+          <span>{tenant?.name || "ERPBijoux Cloud & Edge"}</span>
+          <span>•</span>
+          <span>Thème Joaillerie Haute Précision</span>
           <span>•</span>
           <span>Norme NF525 & CGI Art. 286 I-3° bis</span>
           <span>•</span>
           <span>Base Dexie IndexedDB active</span>
         </div>
         <div className="font-mono text-slate-600">
-          {storeInfo.name} ({storeInfo.posNumber}) • {currentSeller.name}
+          {storeInfo?.name} ({storeInfo?.posNumber}) • {currentSeller?.name}
         </div>
       </footer>
     </div>

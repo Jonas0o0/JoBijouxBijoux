@@ -9,8 +9,11 @@ import fr.bijoux.erp.pos.domain.model.PosItemType;
 import fr.bijoux.erp.pos.domain.model.PosTicket;
 import fr.bijoux.erp.pos.domain.repository.PosTicketRepository;
 import fr.bijoux.erp.pos.domain.strategy.*;
+import fr.bijoux.erp.pos.dto.CheckoutRepairRequest;
 import fr.bijoux.erp.pos.dto.CheckoutRequest;
 import fr.bijoux.erp.pos.dto.CheckoutResponse;
+import fr.bijoux.erp.workshop.domain.service.WorkshopService;
+import fr.bijoux.erp.workshop.dto.RepairInvoiceDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +42,9 @@ class CheckoutServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private WorkshopService workshopService;
+
     private CheckoutService checkoutService;
 
     @BeforeEach
@@ -61,7 +67,8 @@ class CheckoutServiceTest {
                 registry,
                 vatCalculationService,
                 sealingEngine,
-                eventPublisher
+                eventPublisher,
+                workshopService
         );
         ReflectionTestUtils.setField(checkoutService, "sealingSecret", "TEST_FISCAL_KEY_FOR_UNIT_TESTS_128_BITS");
     }
@@ -138,5 +145,52 @@ class CheckoutServiceTest {
         assertThat(response.payments()).hasSize(2);
         assertThat(response.payments().get(0).paymentMethod()).isEqualTo("VOUCHER");
         assertThat(response.payments().get(1).paymentMethod()).isEqualTo("CARD");
+    }
+
+    @Test
+    @DisplayName("SAV : Doit encaisser une réparation en déduisant l'acompte et clôturer la fiche en LIVRE_ET_FACTURE")
+    void shouldCheckoutRepairWithDepositDeducted() {
+        when(ticketRepository.countByStoreId(1L)).thenReturn(10L);
+        when(ticketRepository.findTopByStoreIdOrderByCreatedAtDescIdDesc(1L)).thenReturn(Optional.empty());
+        when(ticketRepository.save(any(PosTicket.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Devis total : 150€ (15 000c), Acompte déjà versé : 50€ (5 000c) -> Solde dû : 100€ (10 000c)
+        RepairInvoiceDto invoice = new RepairInvoiceDto(
+                99L,
+                "REP-1-000099",
+                1L,
+                42L,
+                "Remplacement chaton or gris",
+                "OR_GRIS",
+                "750‰",
+                new java.math.BigDecimal("3.800"),
+                15_000L,
+                5_000L,
+                10_000L,
+                new RepairInvoiceDto.LaborDetailDto("Façon", 10_000L),
+                List.of(),
+                "PRET_RETRAIT",
+                java.time.Instant.now()
+        );
+
+        when(workshopService.prepareRepairInvoice(99L)).thenReturn(invoice);
+
+        // Client règle le solde de 100€ par Carte Bancaire
+        CheckoutRepairRequest request = new CheckoutRepairRequest(
+                99L,
+                1L,
+                "vendeur1",
+                42L,
+                List.of(new CheckoutRequest.PaymentDto(PaymentMethod.CARD, 10_000L, null, "TPE-OK-123", null, null))
+        );
+
+        CheckoutResponse response = checkoutService.checkoutRepair(request);
+
+        assertThat(response.totalTtcCents()).isEqualTo(10_000L);
+        assertThat(response.ticketNumber()).isEqualTo("TKT-1-000011");
+        assertThat(response.signature()).isNotBlank();
+
+        // Vérification de l'appel pour clôturer l'ordre de réparation
+        verify(workshopService).markDeliveredAndInvoiced(99L);
     }
 }

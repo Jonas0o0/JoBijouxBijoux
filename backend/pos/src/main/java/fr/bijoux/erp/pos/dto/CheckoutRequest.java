@@ -31,6 +31,7 @@ public record CheckoutRequest(
             int lineNumber,
             PosItemType itemType,
             Long jewelryItemId,
+            Long repairOrderId,
             @NotNull(message = "La désignation est obligatoire")
             String designation,
             @Positive(message = "La quantité doit être supérieure à zéro")
@@ -39,8 +40,21 @@ public record CheckoutRequest(
             long unitPriceTtcCents,
             VatRegime vatRegime,
             Long purchasePriceHtCents,
-            boolean isSecondHand
-    ) {}
+            boolean isSecondHand,
+            Long depositDeductedCents
+    ) {
+        public CartLineDto(int lineNumber,
+                           PosItemType itemType,
+                           Long jewelryItemId,
+                           String designation,
+                           int quantity,
+                           long unitPriceTtcCents,
+                           VatRegime vatRegime,
+                           Long purchasePriceHtCents,
+                           boolean isSecondHand) {
+            this(lineNumber, itemType, jewelryItemId, null, designation, quantity, unitPriceTtcCents, vatRegime, purchasePriceHtCents, isSecondHand, 0L);
+        }
+    }
 
     public record PaymentDto(
             @NotNull(message = "Le mode de paiement est obligatoire")

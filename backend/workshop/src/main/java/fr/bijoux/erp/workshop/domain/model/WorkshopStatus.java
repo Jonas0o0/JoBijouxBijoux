@@ -10,7 +10,8 @@ public enum WorkshopStatus {
     EN_COURS,
     CONTROLE_QUALITE,
     PRET_RETRAIT,
-    RESTITUE;
+    RESTITUE,
+    LIVRE_ET_FACTURE;
 
     public boolean canTransitionTo(WorkshopStatus next) {
         if (next == null || next == this) {
@@ -18,12 +19,13 @@ public enum WorkshopStatus {
         }
 
         return switch (this) {
-            case DEPOT -> next == DEVIS || next == EN_COURS;
-            case DEVIS -> next == EN_COURS || next == RESTITUE;
-            case EN_COURS -> next == CONTROLE_QUALITE;
-            case CONTROLE_QUALITE -> next == PRET_RETRAIT || next == EN_COURS; // Rejet qualité -> retour artisan
-            case PRET_RETRAIT -> next == RESTITUE;
-            case RESTITUE -> false; // État final
+            case DEPOT -> next == DEVIS || next == EN_COURS || next == LIVRE_ET_FACTURE;
+            case DEVIS -> next == EN_COURS || next == RESTITUE || next == LIVRE_ET_FACTURE;
+            case EN_COURS -> next == CONTROLE_QUALITE || next == LIVRE_ET_FACTURE;
+            case CONTROLE_QUALITE -> next == PRET_RETRAIT || next == EN_COURS || next == LIVRE_ET_FACTURE; // Rejet qualité -> retour artisan
+            case PRET_RETRAIT -> next == RESTITUE || next == LIVRE_ET_FACTURE;
+            case RESTITUE -> next == LIVRE_ET_FACTURE;
+            case LIVRE_ET_FACTURE -> false; // État final
         };
     }
 }

@@ -3,6 +3,7 @@ package fr.bijoux.erp.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.bijoux.erp.workshop.domain.model.WorkshopStatus;
 import fr.bijoux.erp.workshop.domain.service.WorkshopService;
+import fr.bijoux.erp.workshop.dto.RepairInvoiceDto;
 import fr.bijoux.erp.workshop.dto.RepairOrderResponse;
 import fr.bijoux.erp.workshop.dto.WorkshopStatusUpdateRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -116,5 +117,39 @@ class WorkshopControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("EN_COURS"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/workshop/orders/{id}/invoice - Doit retourner le décompte de facturation SAV")
+    void shouldGetRepairInvoice() throws Exception {
+        RepairInvoiceDto invoice = new RepairInvoiceDto(
+                1L,
+                "REP-1-000001",
+                1L,
+                42L,
+                "Mise à taille bague or 750",
+                "OR",
+                "750‰",
+                new BigDecimal("4.500"),
+                18_000L,
+                5_000L,
+                13_000L,
+                new RepairInvoiceDto.LaborDetailDto("Façon atelier", 13_000L),
+                List.of(new RepairInvoiceDto.SupplyDetailDto("Or apport soudure", 1, 2_000L, 2_000L)),
+                "PRET_RETRAIT",
+                Instant.now()
+        );
+
+        when(workshopService.prepareRepairInvoice(1L)).thenReturn(invoice);
+
+        mockMvc.perform(get("/api/v1/workshop/orders/1/invoice"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.repairOrderId").value(1))
+                .andExpect(jsonPath("$.orderNumber").value("REP-1-000001"))
+                .andExpect(jsonPath("$.totalCostCents").value(18000))
+                .andExpect(jsonPath("$.depositPaidCents").value(5000))
+                .andExpect(jsonPath("$.remainingBalanceCents").value(13000))
+                .andExpect(jsonPath("$.labor.amountCents").value(13000))
+                .andExpect(jsonPath("$.supplies[0].componentName").value("Or apport soudure"));
     }
 }

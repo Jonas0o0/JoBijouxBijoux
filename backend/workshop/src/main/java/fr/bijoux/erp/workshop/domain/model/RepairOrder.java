@@ -57,6 +57,12 @@ public class RepairOrder {
     @Column(name = "final_price_cents")
     private Long finalPriceCents;
 
+    @Column(name = "deposit_paid_cents")
+    private Long depositPaidCents = 0L;
+
+    @Column(name = "labor_cost_cents")
+    private Long laborCostCents = 0L;
+
     @Column(name = "customer_notes", columnDefinition = "TEXT")
     private String customerNotes;
 
@@ -149,6 +155,12 @@ public class RepairOrder {
 
     public Long getFinalPriceCents() { return finalPriceCents; }
     public void setFinalPriceCents(Long finalPriceCents) { this.finalPriceCents = finalPriceCents; }
+
+    public Long getDepositPaidCents() { return depositPaidCents; }
+    public void setDepositPaidCents(Long depositPaidCents) { this.depositPaidCents = depositPaidCents; }
+
+    public Long getLaborCostCents() { return laborCostCents; }
+    public void setLaborCostCents(Long laborCostCents) { this.laborCostCents = laborCostCents; }
 
     public String getCustomerNotes() { return customerNotes; }
     public void setCustomerNotes(String customerNotes) { this.customerNotes = customerNotes; }

@@ -26,6 +26,9 @@ public class PosTicketLine {
     @Column(name = "jewelry_item_id")
     private Long jewelryItemId;
 
+    @Column(name = "repair_order_id")
+    private Long repairOrderId;
+
     @Column(name = "designation", nullable = false)
     private String designation;
 
@@ -54,9 +57,16 @@ public class PosTicketLine {
     public PosTicketLine(int lineNumber, PosItemType itemType, Long jewelryItemId,
                          String designation, int quantity, Long unitPriceTtcCents,
                          Long totalTtcCents, BigDecimal vatRate, VatRegime vatRegime, Long vatAmountCents) {
+        this(lineNumber, itemType, jewelryItemId, null, designation, quantity, unitPriceTtcCents, totalTtcCents, vatRate, vatRegime, vatAmountCents);
+    }
+
+    public PosTicketLine(int lineNumber, PosItemType itemType, Long jewelryItemId, Long repairOrderId,
+                         String designation, int quantity, Long unitPriceTtcCents,
+                         Long totalTtcCents, BigDecimal vatRate, VatRegime vatRegime, Long vatAmountCents) {
         this.lineNumber = lineNumber;
         this.itemType = itemType;
         this.jewelryItemId = jewelryItemId;
+        this.repairOrderId = repairOrderId;
         this.designation = designation;
         this.quantity = quantity;
         this.unitPriceTtcCents = unitPriceTtcCents;
@@ -81,6 +91,9 @@ public class PosTicketLine {
 
     public Long getJewelryItemId() { return jewelryItemId; }
     public void setJewelryItemId(Long jewelryItemId) { this.jewelryItemId = jewelryItemId; }
+
+    public Long getRepairOrderId() { return repairOrderId; }
+    public void setRepairOrderId(Long repairOrderId) { this.repairOrderId = repairOrderId; }
 
     public String getDesignation() { return designation; }
     public void setDesignation(String designation) { this.designation = designation; }

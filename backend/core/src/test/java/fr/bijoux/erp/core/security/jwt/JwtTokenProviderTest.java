@@ -39,6 +39,24 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    @DisplayName("Doit générer un JWT valide avec rôles, storeId et tenantId et les extraire avec succès")
+    void shouldGenerateAndValidateJwtTokenWithTenant() {
+        String username = "marie.curie";
+        Set<Role> roles = Set.of(Role.ROLE_ADMIN);
+        Long storeId = 1L;
+        String tenantId = "maison-vendome";
+
+        String token = jwtTokenProvider.generateToken(username, roles, storeId, tenantId);
+
+        assertThat(token).isNotBlank();
+        assertThat(jwtTokenProvider.validateToken(token)).isTrue();
+        assertThat(jwtTokenProvider.getUsername(token)).isEqualTo(username);
+        assertThat(jwtTokenProvider.getRoles(token)).containsExactly(Role.ROLE_ADMIN);
+        assertThat(jwtTokenProvider.getStoreId(token)).isEqualTo(storeId);
+        assertThat(jwtTokenProvider.getTenantId(token)).isEqualTo(tenantId);
+    }
+
+    @Test
     @DisplayName("Doit rejeter un token invalide ou altéré")
     void shouldRejectInvalidToken() {
         assertThat(jwtTokenProvider.validateToken("invalide.token.string")).isFalse();

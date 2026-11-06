@@ -30,5 +30,15 @@ public record CreateRepairOrderRequest(
 
         String svgDefectDiagram,
         Long estimatedQuoteCents,
-        String customerNotes
-) {}
+        String customerNotes,
+        Long depositPaidCents,
+        Long laborCostCents
+) {
+    public CreateRepairOrderRequest(Long storeId, Long customerId, String operatorUsername,
+                                    String itemDescription, String metalType, String fineness,
+                                    BigDecimal grossWeightGrams, String svgDefectDiagram,
+                                    Long estimatedQuoteCents, String customerNotes) {
+        this(storeId, customerId, operatorUsername, itemDescription, metalType, fineness,
+                grossWeightGrams, svgDefectDiagram, estimatedQuoteCents, customerNotes, 0L, 0L);
+    }
+}
