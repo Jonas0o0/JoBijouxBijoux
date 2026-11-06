@@ -25,9 +25,14 @@ export function App() {
 
   // Initialize Dexie Seed & Connect Hardware scale stream
   useEffect(() => {
-    initDatabaseSeed().then(() => {
-      setIsDbReady(true);
-    });
+    initDatabaseSeed()
+      .then(() => {
+        setIsDbReady(true);
+      })
+      .catch((err) => {
+        console.warn("Dexie seed error, continuing:", err);
+        setIsDbReady(true);
+      });
 
     const cleanupScale = connectScale();
     return () => {

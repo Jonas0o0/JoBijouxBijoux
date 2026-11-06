@@ -152,13 +152,13 @@ class ERPBijouxDatabase extends Dexie {
   policeBook!: EntityTable<PoliceBookEntry, "id">;
 
   constructor() {
-    super("ERPBijouxPOSDB");
+    super("ERPBijouxPOSDB_v2");
     this.version(1).stores({
       products: "id, reference, barcode, category, isQuickService",
       sales: "id, ticketNumber, createdAt, customerId, status, synchronized",
       goldBuybacks: "id, contractNumber, createdAt",
       repairs: "id, ticketNumber, customerId, status, promisedDate",
-      policeBook: "id, ++orderNumber, date, movementType, invoiceOrContractRef",
+      policeBook: "id, orderNumber, date, movementType, invoiceOrContractRef",
     });
   }
 }
