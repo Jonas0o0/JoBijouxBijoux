@@ -1,4 +1,4 @@
-import { db, type ProductItem, type PoliceBookEntry, type RepairItem } from "./db";
+import { db, type ProductItem, type PoliceBookEntry, type RepairItem, type CustomerRecord } from "./db";
 
 export const INITIAL_PRODUCTS: ProductItem[] = [
   {
@@ -280,6 +280,122 @@ export const INITIAL_POLICE_BOOK: PoliceBookEntry[] = [
   },
 ];
 
+export const INITIAL_CUSTOMERS: CustomerRecord[] = [
+  {
+    id: "cust-dupont",
+    firstName: "Marie",
+    lastName: "Dupont",
+    email: "marie.dupont@email.fr",
+    phone: "06 12 34 56 78",
+    address: "15 Rue Royale, 75008 Paris",
+    vipTier: "PRESTIGE",
+    fingerSizes: [
+      { finger: "annulaire_g", fingerLabel: "Annulaire gauche (Alliance)", hand: "gauche", size: 52, measuredAt: "2026-10-12" },
+      { finger: "annulaire_d", fingerLabel: "Annulaire droit", hand: "droite", size: 53, measuredAt: "2026-10-12" },
+      { finger: "majeur_d", fingerLabel: "Majeur droit", hand: "droite", size: 55, measuredAt: "2026-10-12" },
+      { finger: "index_d", fingerLabel: "Index droit", hand: "droite", size: 54, measuredAt: "2026-10-12" },
+    ],
+    wristSizeCm: 16.5,
+    necklaceSizeCm: 42,
+    preferences: "Or Blanc 18K, Solitaires classiques, Diamants taille brillant",
+    notes: "Anniversaire de mariage le 14 juin. Préfère les alertes par SMS.",
+    anniversaryDate: "14 juin",
+    totalSpent: 4640.0,
+    ordersCount: 2,
+    voucherAmount: 50.0,
+    createdAt: "2026-05-10T11:00:00Z",
+  },
+  {
+    id: "cust-leroy",
+    firstName: "Alexandre",
+    lastName: "Leroy",
+    email: "a.leroy@finance-paris.com",
+    phone: "07 98 76 54 32",
+    address: "42 Boulevard Haussmann, 75009 Paris",
+    vipTier: "STANDARD",
+    fingerSizes: [
+      { finger: "annulaire_g", fingerLabel: "Annulaire gauche", hand: "gauche", size: 58, measuredAt: "2026-09-04" },
+      { finger: "majeur_d", fingerLabel: "Majeur droit", hand: "droite", size: 60, measuredAt: "2026-09-04" },
+    ],
+    wristSizeCm: 18.0,
+    preferences: "Horlogerie mécanique suisse, Acier 316L, Oméga",
+    notes: "Possède une Seamaster en révision. Passionné de calibres automatiques.",
+    totalSpent: 1890.0,
+    ordersCount: 1,
+    voucherAmount: 0,
+    createdAt: "2026-09-04T14:30:00Z",
+  },
+  {
+    id: "cust-moreau",
+    firstName: "Claire",
+    lastName: "Moreau",
+    email: "claire.moreau@art-vendome.fr",
+    phone: "06 44 55 66 77",
+    address: "7 Quai Voltaire, 75007 Paris",
+    vipTier: "HAUTE_JOAILLERIE",
+    fingerSizes: [
+      { finger: "annulaire_g", fingerLabel: "Annulaire gauche", hand: "gauche", size: 50, measuredAt: "2026-11-01" },
+      { finger: "annulaire_d", fingerLabel: "Annulaire droit", hand: "droite", size: 51, measuredAt: "2026-11-01" },
+      { finger: "majeur_g", fingerLabel: "Majeur gauche", hand: "gauche", size: 53, measuredAt: "2026-11-01" },
+      { finger: "index_g", fingerLabel: "Index gauche", hand: "gauche", size: 52, measuredAt: "2026-11-01" },
+      { finger: "auriculaire_d", fingerLabel: "Auriculaire droit", hand: "droite", size: 46, measuredAt: "2026-11-01" },
+    ],
+    wristSizeCm: 15.5,
+    necklaceSizeCm: 45,
+    preferences: "Saphirs de Ceylan, Émeraudes de Colombie, Platine 950",
+    notes: "Invitations privées aux ventes Haute Joaillerie. Service conciergerie personnalisé.",
+    anniversaryDate: "28 septembre",
+    totalSpent: 14250.0,
+    ordersCount: 5,
+    voucherAmount: 120.0,
+    createdAt: "2025-11-18T09:15:00Z",
+  },
+  {
+    id: "cust-saint-ange",
+    firstName: "Sophie",
+    lastName: "de Saint-Ange",
+    email: "s.desaintange@chateau-paris.com",
+    phone: "06 88 11 22 33",
+    address: "24 Avenue Gabriel, 75008 Paris",
+    vipTier: "HAUTE_JOAILLERIE",
+    fingerSizes: [
+      { finger: "annulaire_g", fingerLabel: "Annulaire gauche", hand: "gauche", size: 51, measuredAt: "2026-08-20" },
+      { finger: "annulaire_d", fingerLabel: "Annulaire droit", hand: "droite", size: 52, measuredAt: "2026-08-20" },
+      { finger: "majeur_d", fingerLabel: "Majeur droit", hand: "droite", size: 54, measuredAt: "2026-08-20" },
+    ],
+    wristSizeCm: 16.0,
+    necklaceSizeCm: 40,
+    preferences: "Pièces uniques signées, Diamants D/IF, Rivières Tennis",
+    notes: "Collectionneuse. Contact VIP exclusif.",
+    anniversaryDate: "10 décembre",
+    totalSpent: 22800.0,
+    ordersCount: 7,
+    voucherAmount: 300.0,
+    createdAt: "2025-06-12T16:00:00Z",
+  },
+  {
+    id: "cust-gauthier",
+    firstName: "Pauline",
+    lastName: "Gauthier",
+    email: "p.gauthier@avocat-barreau.fr",
+    phone: "06 61 72 83 94",
+    address: "18 Rue Bonaparte, 75006 Paris",
+    vipTier: "PRESTIGE",
+    fingerSizes: [
+      { finger: "annulaire_g", fingerLabel: "Annulaire gauche", hand: "gauche", size: 54, measuredAt: "2026-10-05" },
+      { finger: "majeur_d", fingerLabel: "Majeur droit", hand: "droite", size: 56, measuredAt: "2026-10-05" },
+    ],
+    wristSizeCm: 17.0,
+    necklaceSizeCm: 50,
+    preferences: "Or Jaune 18K texturé, Bijoux Art Déco",
+    notes: "A effectué un rachat d'or ancien pour financer un nouveau projet sur-mesure.",
+    totalSpent: 3450.0,
+    ordersCount: 2,
+    voucherAmount: 75.0,
+    createdAt: "2026-03-22T10:45:00Z",
+  },
+];
+
 export async function initDatabaseSeed() {
   const productCount = await db.products.count();
   if (productCount === 0) {
@@ -292,5 +408,9 @@ export async function initDatabaseSeed() {
   const policeCount = await db.policeBook.count();
   if (policeCount === 0) {
     await db.policeBook.bulkAdd(INITIAL_POLICE_BOOK);
+  }
+  const customerCount = await db.customers.count();
+  if (customerCount === 0) {
+    await db.customers.bulkAdd(INITIAL_CUSTOMERS);
   }
 }

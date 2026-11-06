@@ -19,8 +19,8 @@ export function ReceiptModal() {
       isOpen={Boolean(lastCompletedSale)}
       onClose={resetLastSale}
       title={
-        <div className="flex items-center gap-2 text-emerald-400">
-          <CheckCircle className="w-5 h-5" />
+        <div className="flex items-center gap-2 text-emerald-700">
+          <CheckCircle className="w-5 h-5 text-emerald-600" />
           <span>Vente Validée avec Succès</span>
         </div>
       }
@@ -140,7 +140,7 @@ export function ReceiptModal() {
         <div className="flex items-center gap-3">
           <button
             onClick={handlePrint}
-            className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-md"
+            className="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
           >
             <Printer className="w-4 h-4" />
             <span>Imprimer Ticket Thermique</span>
@@ -148,9 +148,9 @@ export function ReceiptModal() {
 
           <button
             onClick={resetLastSale}
-            className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors"
+            className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 transition-colors shadow-xs"
           >
-            <PlusCircle className="w-4 h-4 text-emerald-400" />
+            <PlusCircle className="w-4 h-4 text-emerald-600" />
             <span>Nouvelle Vente</span>
           </button>
         </div>

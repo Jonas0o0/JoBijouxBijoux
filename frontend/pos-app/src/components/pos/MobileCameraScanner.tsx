@@ -204,35 +204,35 @@ export function MobileCameraScanner({
         </div>
 
         {/* Quick simulation buttons for testing instant scan on any device */}
-        <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-          <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
-            <Barcode className="w-3.5 h-3.5 text-amber-400" />
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+          <div className="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
+            <Barcode className="w-3.5 h-3.5 text-amber-600" />
             <span>Simulation de scan rapide pour test (sans appareil photo) :</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => triggerDetectedBarcode("200000000101")}
-              className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-left text-xs"
+              className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-left text-xs shadow-xs"
             >
-              <span className="font-semibold text-slate-100 block truncate">Solitaire 18K</span>
-              <span className="text-[10px] text-amber-400 font-mono">200000000101</span>
+              <span className="font-semibold text-slate-900 block truncate">Solitaire 18K</span>
+              <span className="text-[10px] text-amber-700 font-mono">200000000101</span>
             </button>
             <button
               type="button"
               onClick={() => triggerDetectedBarcode("200000000102")}
-              className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-left text-xs"
+              className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-left text-xs shadow-xs"
             >
-              <span className="font-semibold text-slate-100 block truncate">Alliance Platine</span>
-              <span className="text-[10px] text-amber-400 font-mono">200000000102</span>
+              <span className="font-semibold text-slate-900 block truncate">Alliance Platine</span>
+              <span className="text-[10px] text-amber-700 font-mono">200000000102</span>
             </button>
             <button
               type="button"
               onClick={() => triggerDetectedBarcode("200000000104")}
-              className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-left text-xs"
+              className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-left text-xs shadow-xs"
             >
-              <span className="font-semibold text-slate-100 block truncate">Rivière Diamants</span>
-              <span className="text-[10px] text-amber-400 font-mono">200000000104</span>
+              <span className="font-semibold text-slate-900 block truncate">Rivière Diamants</span>
+              <span className="text-[10px] text-amber-700 font-mono">200000000104</span>
             </button>
           </div>
         </div>

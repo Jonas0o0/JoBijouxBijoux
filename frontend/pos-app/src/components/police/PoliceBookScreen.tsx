@@ -99,48 +99,48 @@ export function PoliceBookScreen() {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-950 overflow-y-auto space-y-6">
+    <div className="flex-1 flex flex-col p-4 sm:p-6 bg-slate-50 overflow-y-auto space-y-6 text-slate-900">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-black text-slate-100 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-amber-400" />
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-amber-600" />
             <span>Livre de Police Joaillerie (Registre des Objets Mobiliers)</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Registre inaltérable conforme à l'Article 537 du CGI et Art. 321-7 du Code Pénal • Scellé
+          <p className="text-xs text-slate-500 mt-0.5">
+            Registre inaltérable conforme à l'Article 537 du CGI et Art. 321-7 du Code Pénal • Scellé cryptographique
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportCSV}
-            className="py-2.5 px-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center gap-2 border border-slate-700 transition-colors shadow-sm"
+            className="py-2.5 px-3.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl text-xs flex items-center gap-2 border border-slate-200 transition-colors shadow-xs"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Exporter CSV</span>
           </button>
 
           <button
             onClick={handlePrint}
-            className="py-2.5 px-3.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 transition-colors shadow-md"
+            className="py-2.5 px-3.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-colors shadow-xs"
           >
             <Printer className="w-4 h-4" />
-            <span>Imprimer Registre Officiel</span>
+            <span>Imprimer Registre</span>
           </button>
         </div>
       </div>
 
       {/* Legal Compliance Banner */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 text-slate-300">
-          <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+      <div className="bg-white border border-slate-200/90 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
+        <div className="flex items-center gap-2.5 text-slate-700">
+          <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
           <span>
             <strong>Registre dématérialisé à force probante :</strong> Chiffrage et chaînage séquentiel
             garantissant l'absence d'omission, de trou dans la numérotation ou de modification a posteriori.
           </span>
         </div>
-        <span className="font-mono text-amber-400 font-bold px-3 py-1 bg-slate-950 rounded-xl border border-slate-800">
+        <span className="font-mono text-amber-900 bg-amber-50 font-bold px-3 py-1 rounded-xl border border-amber-200">
           {entries.length} écritures enregistrées
         </span>
       </div>
@@ -154,11 +154,11 @@ export function PoliceBookScreen() {
             placeholder="Rechercher n° d'ordre, client, bijou, réf..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-600 shadow-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto text-xs">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto text-xs scrollbar-none">
           {[
             { id: "ALL", label: "Tous les mouvements" },
             { id: "ACHAT", label: "Achats" },
@@ -168,10 +168,10 @@ export function PoliceBookScreen() {
             <button
               key={flt.id}
               onClick={() => setMovementFilter(flt.id)}
-              className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all shadow-xs ${
                 movementFilter === flt.id
-                  ? "bg-amber-600 text-white"
-                  : "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
+                  ? "bg-slate-900 text-white font-semibold"
+                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
               {flt.label}
@@ -181,10 +181,10 @@ export function PoliceBookScreen() {
       </div>
 
       {/* Police Book Immutable Ledger Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-slate-950/90 text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
+            <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="py-3 px-3.5 font-bold">N° Ordre</th>
                 <th className="py-3 px-3">Date</th>
@@ -198,50 +198,50 @@ export function PoliceBookScreen() {
                 <th className="py-3 px-3">Réf Pièce</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80 text-slate-200">
+            <tbody className="divide-y divide-slate-100 text-slate-800">
               {filteredEntries.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-3.5 font-bold text-amber-400">
+                <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3 px-3.5 font-bold text-amber-800">
                     #{row.orderNumber}
                   </td>
-                  <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
+                  <td className="py-3 px-3 text-slate-500 whitespace-nowrap">
                     {formatDateOnly(row.date)}
                   </td>
                   <td className="py-3 px-3 whitespace-nowrap">
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         row.movementType === "ACHAT" || row.movementType === "RACHAT_OR"
-                          ? "bg-amber-950/80 text-amber-300 border border-amber-800/60"
-                          : "bg-emerald-950/80 text-emerald-300 border border-emerald-800/60"
+                          ? "bg-amber-50 text-amber-900 border border-amber-200"
+                          : "bg-emerald-50 text-emerald-800 border border-emerald-200"
                       }`}
                     >
                       {row.movementType}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-sans font-medium text-slate-100 max-w-xs truncate">
+                  <td className="py-3 px-4 font-sans font-medium text-slate-900 max-w-xs truncate">
                     {row.natureOfGoods}
                   </td>
-                  <td className="py-3 px-3 text-slate-300 whitespace-nowrap">
+                  <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
                     {row.metalAndFineness}
                   </td>
-                  <td className="py-3 px-3 font-bold text-slate-100 whitespace-nowrap">
+                  <td className="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
                     {formatWeight(row.grossWeightGrams)}
                   </td>
                   <td className="py-3 px-4 font-sans max-w-xs">
-                    <span className="font-semibold block truncate text-slate-100">{row.partyName}</span>
+                    <span className="font-semibold block truncate text-slate-900">{row.partyName}</span>
                     <span className="text-[10px] text-slate-500 block truncate">{row.partyAddress}</span>
                   </td>
-                  <td className="py-3 px-3 text-right font-bold text-amber-300 whitespace-nowrap">
+                  <td className="py-3 px-3 text-right font-bold text-slate-900 whitespace-nowrap">
                     {row.sellingPrice
                       ? formatCurrency(row.sellingPrice)
                       : row.purchasePrice
                       ? formatCurrency(row.purchasePrice)
                       : "-"}
                   </td>
-                  <td className="py-3 px-3 text-slate-400 text-[10px] whitespace-nowrap">
+                  <td className="py-3 px-3 text-slate-500 text-[10px] whitespace-nowrap">
                     {row.paymentMethod}
                   </td>
-                  <td className="py-3 px-3 font-mono text-[10px] text-slate-500 whitespace-nowrap">
+                  <td className="py-3 px-3 font-mono text-[10px] text-slate-400 whitespace-nowrap">
                     {row.invoiceOrContractRef}
                   </td>
                 </tr>

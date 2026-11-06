@@ -144,12 +144,42 @@ export interface PoliceBookEntry {
   sealedHash: string;
 }
 
+export interface FingerSizeRecord {
+  finger: "pouce_g" | "index_g" | "majeur_g" | "annulaire_g" | "auriculaire_g" | "pouce_d" | "index_d" | "majeur_d" | "annulaire_d" | "auriculaire_d" | string;
+  fingerLabel: string;
+  hand: "gauche" | "droite";
+  size: number;
+  measuredAt?: string;
+  notes?: string;
+}
+
+export interface CustomerRecord {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address?: string;
+  vipTier: "STANDARD" | "PRESTIGE" | "HAUTE_JOAILLERIE";
+  fingerSizes: FingerSizeRecord[];
+  wristSizeCm?: number;
+  necklaceSizeCm?: number;
+  notes?: string;
+  preferences?: string;
+  anniversaryDate?: string;
+  totalSpent: number;
+  ordersCount: number;
+  voucherAmount: number;
+  createdAt: string;
+}
+
 class ERPBijouxDatabase extends Dexie {
   products!: EntityTable<ProductItem, "id">;
   sales!: EntityTable<SaleRecord, "id">;
   goldBuybacks!: EntityTable<GoldBuybackRecord, "id">;
   repairs!: EntityTable<RepairItem, "id">;
   policeBook!: EntityTable<PoliceBookEntry, "id">;
+  customers!: EntityTable<CustomerRecord, "id">;
 
   constructor() {
     super("ERPBijouxPOSDB_v2");
@@ -159,6 +189,9 @@ class ERPBijouxDatabase extends Dexie {
       goldBuybacks: "id, contractNumber, createdAt",
       repairs: "id, ticketNumber, customerId, status, promisedDate",
       policeBook: "id, orderNumber, date, movementType, invoiceOrContractRef",
+    });
+    this.version(2).stores({
+      customers: "id, lastName, firstName, phone, email, vipTier",
     });
   }
 }

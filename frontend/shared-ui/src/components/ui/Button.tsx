@@ -16,17 +16,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         "bg-amber-600 text-white hover:bg-amber-700 active:bg-amber-800 shadow-sm focus:ring-amber-500",
       secondary:
-        "bg-slate-800 text-slate-100 hover:bg-slate-700 active:bg-slate-900 shadow-sm focus:ring-slate-500",
+        "bg-slate-100 text-slate-800 hover:bg-slate-200 active:bg-slate-300 border border-slate-200/90 shadow-xs focus:ring-slate-400",
       gold:
-        "bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-slate-950 font-semibold shadow-md hover:from-amber-400 hover:to-amber-500 focus:ring-amber-400",
+        "bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 text-white font-semibold shadow-sm hover:brightness-105 active:brightness-95 focus:ring-amber-400",
       danger:
         "bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 shadow-sm focus:ring-rose-500",
       success:
         "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-sm focus:ring-emerald-500",
       outline:
-        "border border-slate-700 text-slate-200 hover:bg-slate-800/80 active:bg-slate-800 focus:ring-slate-400",
+        "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:bg-slate-100 focus:ring-slate-400 shadow-xs",
       ghost:
-        "text-slate-300 hover:bg-slate-800/60 active:bg-slate-800 focus:ring-slate-400",
+        "text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 focus:ring-slate-400",
     };
 
     const sizeStyles = {

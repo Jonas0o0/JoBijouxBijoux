@@ -126,8 +126,8 @@ export function PaymentModal() {
       isOpen={isPaymentModalOpen}
       onClose={closePaymentModal}
       title={
-        <div className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-amber-400" />
+        <div className="flex items-center gap-2 text-slate-900">
+          <CreditCard className="w-5 h-5 text-amber-600" />
           <span>Encaissement & Multi-Règlements Joaillerie</span>
         </div>
       }
@@ -136,18 +136,22 @@ export function PaymentModal() {
     >
       <div className="space-y-6">
         {/* Summary Card */}
-        <div className="grid grid-cols-3 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center">
+        <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center shadow-xs">
           <div>
-            <span className="text-[11px] text-slate-400 block">Total TTC</span>
-            <span className="text-lg font-black text-slate-100">{formatCurrency(totalTTC)}</span>
+            <span className="text-[11px] text-slate-500 block font-medium">Total TTC</span>
+            <span className="text-lg font-black text-slate-900 font-mono">{formatCurrency(totalTTC)}</span>
           </div>
           <div>
-            <span className="text-[11px] text-slate-400 block">Déjà Réglé</span>
-            <span className="text-lg font-black text-emerald-400">{formatCurrency(totalPaid)}</span>
+            <span className="text-[11px] text-slate-500 block font-medium">Déjà Réglé</span>
+            <span className="text-lg font-black text-emerald-700 font-mono">{formatCurrency(totalPaid)}</span>
           </div>
           <div>
-            <span className="text-[11px] text-slate-400 block">Reste Dû</span>
-            <span className={`text-lg font-black ${remaining > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+            <span className="text-[11px] text-slate-500 block font-medium">Reste Dû</span>
+            <span
+              className={`text-lg font-black font-mono ${
+                remaining > 0 ? "text-amber-700" : "text-emerald-700"
+              }`}
+            >
               {formatCurrency(remaining)}
             </span>
           </div>
@@ -155,17 +159,17 @@ export function PaymentModal() {
 
         {/* Change due alert if cash paid > total */}
         {changeDue > 0 && (
-          <div className="bg-emerald-950/60 border border-emerald-600/50 p-4 rounded-2xl flex items-center justify-between animate-pulse">
+          <div className="bg-emerald-50 border border-emerald-300 p-4 rounded-2xl flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-3">
-              <Banknote className="w-6 h-6 text-emerald-400" />
+              <Banknote className="w-6 h-6 text-emerald-600" />
               <div>
-                <span className="text-xs text-emerald-300 font-semibold block">Monnaie à rendre au client :</span>
-                <span className="text-2xl font-black text-emerald-200">{formatCurrency(changeDue)}</span>
+                <span className="text-xs text-emerald-800 font-semibold block">Monnaie à rendre au client :</span>
+                <span className="text-2xl font-black text-emerald-900 font-mono">{formatCurrency(changeDue)}</span>
               </div>
             </div>
             <button
               onClick={openCashDrawer}
-              className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs"
             >
               Tiroir (F9)
             </button>
@@ -175,28 +179,28 @@ export function PaymentModal() {
         {/* Already entered payments list */}
         {payments.length > 0 && (
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-slate-400">Règlements enregistrés pour ce ticket :</span>
+            <span className="text-xs font-semibold text-slate-500">Règlements enregistrés pour ce ticket :</span>
             <div className="space-y-1.5">
               {payments.map((p, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-xs"
+                  className="flex items-center justify-between bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs shadow-xs"
                 >
                   <div className="flex items-center gap-2">
-                    {p.method === "CB_TPE" && <CreditCard className="w-4 h-4 text-sky-400" />}
-                    {p.method === "ESPECES" && <Banknote className="w-4 h-4 text-emerald-400" />}
-                    {p.method === "AVOIR" && <Gift className="w-4 h-4 text-purple-400" />}
-                    {p.method === "VIREMENT" && <Building className="w-4 h-4 text-amber-400" />}
-                    <span className="font-bold text-slate-200">{p.method.replace("_", " ")}</span>
+                    {p.method === "CB_TPE" && <CreditCard className="w-4 h-4 text-sky-600" />}
+                    {p.method === "ESPECES" && <Banknote className="w-4 h-4 text-emerald-600" />}
+                    {p.method === "AVOIR" && <Gift className="w-4 h-4 text-purple-600" />}
+                    {p.method === "VIREMENT" && <Building className="w-4 h-4 text-amber-600" />}
+                    <span className="font-bold text-slate-800">{p.method.replace("_", " ")}</span>
                     {p.authorizationCode && (
                       <span className="text-[10px] text-slate-400 font-mono">({p.authorizationCode})</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-slate-100">{formatCurrency(p.amount)}</span>
+                    <span className="font-mono font-bold text-slate-900">{formatCurrency(p.amount)}</span>
                     <button
                       onClick={() => removePayment(index)}
-                      className="text-slate-500 hover:text-rose-400"
+                      className="text-slate-400 hover:text-rose-600 p-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -214,90 +218,90 @@ export function PaymentModal() {
               <button
                 type="button"
                 onClick={() => setSelectedMethod("CB_TPE")}
-                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all shadow-xs ${
                   selectedMethod === "CB_TPE"
-                    ? "bg-sky-950/60 border-sky-500 text-sky-200 shadow-sm"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900"
+                    ? "bg-sky-50 border-sky-400 text-sky-900 ring-2 ring-sky-500/20"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <CreditCard className="w-5 h-5 text-sky-400" />
+                <CreditCard className="w-5 h-5 text-sky-600" />
                 <span>CB TPE</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedMethod("ESPECES")}
-                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all shadow-xs ${
                   selectedMethod === "ESPECES"
-                    ? "bg-emerald-950/60 border-emerald-500 text-emerald-200 shadow-sm"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900"
+                    ? "bg-emerald-50 border-emerald-400 text-emerald-900 ring-2 ring-emerald-500/20"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <Banknote className="w-5 h-5 text-emerald-400" />
+                <Banknote className="w-5 h-5 text-emerald-600" />
                 <span>Espèces</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedMethod("AVOIR")}
-                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all shadow-xs ${
                   selectedMethod === "AVOIR"
-                    ? "bg-purple-950/60 border-purple-500 text-purple-200 shadow-sm"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900"
+                    ? "bg-purple-50 border-purple-400 text-purple-900 ring-2 ring-purple-500/20"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <Gift className="w-5 h-5 text-purple-400" />
+                <Gift className="w-5 h-5 text-purple-600" />
                 <span>Avoir / Bon</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedMethod("VIREMENT")}
-                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all shadow-xs ${
                   selectedMethod === "VIREMENT"
-                    ? "bg-amber-950/60 border-amber-500 text-amber-200 shadow-sm"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-900"
+                    ? "bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-500/20"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <Building className="w-5 h-5 text-amber-400" />
+                <Building className="w-5 h-5 text-amber-600" />
                 <span>Virement</span>
               </button>
             </div>
 
             {/* CB TPE Panel */}
             {selectedMethod === "CB_TPE" && (
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4 text-center">
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4 text-center">
                 <div className="flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-2xl bg-sky-950/60 border border-sky-800/60 flex items-center justify-center">
-                    <CreditCard className="w-8 h-8 text-sky-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-xs">
+                    <CreditCard className="w-8 h-8 text-sky-600" />
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-base font-bold text-slate-100">
+                  <h4 className="text-base font-bold text-slate-900">
                     Déclencher transaction TPE : {formatCurrency(remaining)}
                   </h4>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     Envoi du montant sur le terminal bancaire via protocole Concert / IP
                   </p>
                 </div>
 
                 {tpeStatus === "PROCESSING" || tpeStatus === "WAITING_INSERTION" ? (
-                  <div className="bg-sky-950/40 border border-sky-700/60 p-4 rounded-xl text-sky-200 text-sm font-semibold flex items-center justify-center gap-3 animate-pulse">
+                  <div className="bg-sky-50 border border-sky-300 p-4 rounded-xl text-sky-900 text-sm font-semibold flex items-center justify-center gap-3 animate-pulse">
                     <span>Veuillez insérer ou présenter la carte sur le TPE...</span>
                   </div>
                 ) : tpeStatus === "APPROVED" ? (
-                  <div className="bg-emerald-950/40 border border-emerald-700/60 p-4 rounded-xl text-emerald-200 text-sm font-semibold flex items-center justify-center gap-3">
-                    <Check className="w-5 h-5 text-emerald-400" />
+                  <div className="bg-emerald-50 border border-emerald-300 p-4 rounded-xl text-emerald-900 text-sm font-semibold flex items-center justify-center gap-3">
+                    <Check className="w-5 h-5 text-emerald-600" />
                     <span>Transaction Approuvée ! Code: {tpeAuthCode}</span>
                   </div>
                 ) : (
                   <button
                     onClick={handleTriggerTpe}
                     disabled={isProcessing}
-                    className="w-full py-3.5 px-4 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-sky-900/30 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white rounded-xl font-bold text-sm shadow-xs flex items-center justify-center gap-2 transition-colors"
                   >
-                    <span>Lancer le paiement TPE</span>
+                    <span>Lancer le paiement TPE ({formatCurrency(remaining)})</span>
                   </button>
                 )}
               </div>
@@ -305,10 +309,10 @@ export function PaymentModal() {
 
             {/* Espèces Panel */}
             {selectedMethod === "ESPECES" && (
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-4">
                 {/* Legal ceiling note */}
-                <div className="bg-amber-950/40 border border-amber-800/40 p-3 rounded-xl flex items-start gap-2.5 text-xs text-amber-200">
-                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
+                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <span>
                     <strong>Plafond légal 1 000 € :</strong> Conformément à l'Article L112-6 du Code Monétaire et
                     Financier, le montant payé en espèces ne peut excéder 1 000 € par acte d'achat.
@@ -316,7 +320,7 @@ export function PaymentModal() {
                 </div>
 
                 {cashError && (
-                  <div className="bg-rose-950/80 border border-rose-700 p-3 rounded-xl text-rose-200 text-xs font-semibold">
+                  <div className="bg-rose-50 border border-rose-300 p-3 rounded-xl text-rose-800 text-xs font-semibold">
                     {cashError}
                   </div>
                 )}
@@ -326,7 +330,7 @@ export function PaymentModal() {
                   <button
                     type="button"
                     onClick={() => handleAddCash(Math.min(1000, remaining))}
-                    className="py-2.5 px-2 bg-emerald-950/80 border border-emerald-700 hover:bg-emerald-900 text-emerald-200 rounded-xl text-xs font-bold truncate"
+                    className="py-2.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold truncate shadow-xs"
                   >
                     Montant exact
                   </button>
@@ -335,7 +339,7 @@ export function PaymentModal() {
                       key={bill}
                       type="button"
                       onClick={() => handleAddCash(bill)}
-                      className="py-2.5 px-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-100 rounded-xl text-xs font-bold"
+                      className="py-2.5 px-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 rounded-xl text-xs font-bold shadow-xs"
                     >
                       Billet {bill} €
                     </button>
@@ -350,12 +354,12 @@ export function PaymentModal() {
                       readOnly
                       placeholder="Montant reçu..."
                       value={cashInputValue ? `${cashInputValue} €` : ""}
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-slate-100"
+                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-slate-900 shadow-xs"
                     />
                     <button
                       type="button"
                       onClick={handleApplyCashInput}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-xs"
                     >
                       Encaisser
                     </button>
@@ -367,10 +371,10 @@ export function PaymentModal() {
                         key={char}
                         type="button"
                         onClick={() => handleCashNumPadPress(char)}
-                        className={`h-11 rounded-xl text-base font-bold transition-all ${
+                        className={`h-11 rounded-xl text-base font-bold transition-all shadow-xs ${
                           char === "C"
-                            ? "bg-rose-950/80 border border-rose-800 text-rose-300 hover:bg-rose-900"
-                            : "bg-slate-900 border border-slate-800 text-slate-100 hover:bg-slate-800 active:scale-95"
+                            ? "bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100"
+                            : "bg-white border border-slate-200 text-slate-800 hover:bg-slate-100 active:scale-95"
                         }`}
                       >
                         {char}
@@ -383,15 +387,15 @@ export function PaymentModal() {
 
             {/* Avoir / Voucher Panel */}
             {selectedMethod === "AVOIR" && (
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                <span className="text-xs font-bold text-slate-200">Enregistrer un bon d'achat ou avoir client</span>
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <span className="text-xs font-bold text-slate-800">Enregistrer un bon d'achat ou avoir client</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
                     placeholder="Montant du bon d'achat..."
                     defaultValue={Math.min(50, remaining)}
                     id="voucherInput"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 shadow-xs"
                   />
                   <button
                     type="button"
@@ -406,7 +410,7 @@ export function PaymentModal() {
                         });
                       }
                     }}
-                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-sm"
+                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm shadow-xs"
                   >
                     Valider
                   </button>
@@ -416,11 +420,11 @@ export function PaymentModal() {
 
             {/* Virement Panel */}
             {selectedMethod === "VIREMENT" && (
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-center">
-                <span className="text-xs font-bold text-slate-200">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 text-center">
+                <span className="text-xs font-bold text-slate-800">
                   Règlement par Virement Bancaire Immédiat ou Chèque Certifié
                 </span>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Idéal pour pièces de Haute Joaillerie excédant les plafonds CB / Espèces.
                 </p>
                 <button
@@ -432,7 +436,7 @@ export function PaymentModal() {
                       reference: `VIR-${Date.now().toString().slice(-6)}`,
                     });
                   }}
-                  className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl text-sm"
+                  className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm shadow-xs"
                 >
                   Confirmer le virement pour {formatCurrency(remaining)}
                 </button>
@@ -447,9 +451,9 @@ export function PaymentModal() {
             <button
               onClick={handleCompleteSale}
               disabled={isProcessing}
-              className="w-full py-4 px-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-lg rounded-2xl shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-3 active:scale-[0.99] transition-all"
+              className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-105 text-white font-black text-base rounded-2xl shadow-sm flex items-center justify-center gap-3 active:scale-[0.99] transition-all"
             >
-              <Sparkles className="w-5 h-5 text-slate-950" />
+              <Sparkles className="w-5 h-5 text-white" />
               <span>Finaliser la Vente & Imprimer Ticket (F12)</span>
             </button>
           </div>

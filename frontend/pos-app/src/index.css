@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   /* Disable pull-to-refresh and rubber-band bounce on mobile/tablet */
@@ -12,25 +12,32 @@
     overscroll-behavior-y: none;
     touch-action: pan-x pan-y;
     -webkit-tap-highlight-color: transparent;
+    background-color: #f8fafc;
+    color: #0f172a;
   }
 
-  /* Custom scrollbars for POS touch screens */
+  ::selection {
+    background-color: #fef3c7;
+    color: #78350f;
+  }
+
+  /* Custom scrollbars for POS touch screens and desktops */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(241, 245, 249, 0.8);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(100, 116, 139, 0.5);
+    background: rgba(203, 213, 225, 0.8);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.8);
+    background: rgba(148, 163, 184, 1);
   }
 }
 
