@@ -34,6 +34,7 @@ export interface SellerInfo {
   username?: string;
   initials: string;
   role: string;
+  securityRole?: "ROLE_ADMIN" | "ROLE_GERANT" | "ROLE_VENDEUR";
   pin: string;
   storeId?: string;
   email?: string;
@@ -136,6 +137,7 @@ export const SAAS_TENANTS: TenantInfo[] = [
         name: "Sophie Valadier",
         initials: "SV",
         role: "Conseillère Haute Joaillerie",
+        securityRole: "ROLE_VENDEUR",
         pin: "1234",
         avatarBg: "from-amber-600 to-yellow-600",
       },
@@ -143,7 +145,8 @@ export const SAAS_TENANTS: TenantInfo[] = [
         id: "emp-alexandre",
         name: "Alexandre Dumas",
         initials: "AD",
-        role: "Directeur de Maison & Gérant",
+        role: "Directeur de Maison & Administrateur",
+        securityRole: "ROLE_ADMIN",
         pin: "0000",
         avatarBg: "from-slate-700 to-slate-900",
       },
@@ -151,7 +154,8 @@ export const SAAS_TENANTS: TenantInfo[] = [
         id: "emp-marc",
         name: "Marc Laurent",
         initials: "ML",
-        role: "Maître Artisan Joaillier",
+        role: "Maître Artisan Joaillier & Gérant",
+        securityRole: "ROLE_GERANT",
         pin: "5678",
         avatarBg: "from-amber-700 to-amber-900",
       },
@@ -160,6 +164,7 @@ export const SAAS_TENANTS: TenantInfo[] = [
         name: "Camille de Montmirail",
         initials: "CM",
         role: "Gemmologue & Vendeuse",
+        securityRole: "ROLE_VENDEUR",
         pin: "4321",
         avatarBg: "from-rose-500 to-pink-700",
       },
@@ -215,7 +220,8 @@ export const SAAS_TENANTS: TenantInfo[] = [
         id: "emp-jbdubois",
         name: "Jean-Baptiste Dubois",
         initials: "JD",
-        role: "Maître Bijoutier Gérant",
+        role: "Maître Bijoutier Gérant & Administrateur",
+        securityRole: "ROLE_ADMIN",
         pin: "1234",
         avatarBg: "from-emerald-700 to-teal-900",
       },
@@ -224,6 +230,7 @@ export const SAAS_TENANTS: TenantInfo[] = [
         name: "Marc Laurent",
         initials: "ML",
         role: "Bijoutier Atelier Sertisseur",
+        securityRole: "ROLE_VENDEUR",
         pin: "5678",
         avatarBg: "from-amber-600 to-yellow-600",
       },
@@ -231,7 +238,8 @@ export const SAAS_TENANTS: TenantInfo[] = [
         id: "emp-elodie",
         name: "Élodie Garnier",
         initials: "EG",
-        role: "Responsable Boutique",
+        role: "Responsable Boutique & Gérante",
+        securityRole: "ROLE_GERANT",
         pin: "2468",
         avatarBg: "from-indigo-600 to-purple-800",
       },

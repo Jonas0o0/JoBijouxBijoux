@@ -10,6 +10,7 @@ import fr.bijoux.erp.pos.dto.CheckoutResponse;
 import fr.bijoux.erp.pos.dto.FiscalClosureDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -60,6 +61,7 @@ public class PosController {
     }
 
     @PostMapping("/closures/m")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERANT')")
     public ResponseEntity<FiscalClosureDto> executeMonthlyM(@RequestParam Long storeId,
                                                            @RequestParam String operator) {
         FiscalClosure closure = closureService.executeMonthlyM(storeId, operator);
@@ -67,6 +69,7 @@ public class PosController {
     }
 
     @PostMapping("/closures/a")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FiscalClosureDto> executeAnnualA(@RequestParam Long storeId,
                                                           @RequestParam String operator) {
         FiscalClosure closure = closureService.executeAnnualA(storeId, operator);

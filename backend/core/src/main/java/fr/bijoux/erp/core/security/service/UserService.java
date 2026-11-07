@@ -90,4 +90,14 @@ public class UserService {
         User saved = userRepository.save(user);
         return UserDto.fromEntity(saved);
     }
+
+    @Transactional
+    public UserDto updateRoles(Long userId, Set<Role> roles) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable id=" + userId));
+        user.setRoles(new HashSet<>(roles));
+        user.setUpdatedAt(Instant.now());
+        User saved = userRepository.save(user);
+        return UserDto.fromEntity(saved);
+    }
 }

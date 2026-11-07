@@ -38,7 +38,8 @@ interface AccountingEntry {
 }
 
 export function AccountingScreen() {
-  const { storeInfo } = useUserStore();
+  const { storeInfo, isAdmin } = useUserStore();
+  const adminMode = isAdmin();
   const [sales, setSales] = useState<SaleRecord[]>([]);
   const [closures, setClosures] = useState<FiscalClosureRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"JOURNAL" | "CLOSURES" | "LEGAL">("JOURNAL");
@@ -552,13 +553,25 @@ export function AccountingScreen() {
             <span>Clôture Fiscale Z</span>
           </button>
 
-          <button
-            onClick={handleExportFEC}
-            className="py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
-          >
-            <Download className="w-4 h-4 text-amber-200" />
-            <span>Exporter le FEC (DGFIP)</span>
-          </button>
+          {adminMode ? (
+            <button
+              onClick={handleExportFEC}
+              className="py-2 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
+              title="Génération du Fichier des Écritures Comptables conforme DGFIP"
+            >
+              <Download className="w-4 h-4 text-amber-200" />
+              <span>Exporter le FEC (DGFIP)</span>
+            </button>
+          ) : (
+            <button
+              disabled
+              className="py-2 px-3.5 bg-slate-100 text-slate-400 font-medium rounded-xl text-xs border border-slate-200 flex items-center gap-1.5 cursor-not-allowed opacity-70"
+              title="Export réservé au profil Administrateur / Patron (ROLE_ADMIN)"
+            >
+              <Download className="w-4 h-4 text-slate-400" />
+              <span>Export FEC (Réservé Patron)</span>
+            </button>
+          )}
         </div>
       </div>
 

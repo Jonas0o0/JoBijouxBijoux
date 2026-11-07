@@ -9,23 +9,40 @@ import {
   EyeOff,
   Store,
   Sparkles,
+  Shield,
+  Edit3,
 } from "lucide-react";
 import { useUserStore } from "../../store/useUserStore";
 import { Modal } from "@erp-bijoux/shared-ui";
 import type { SellerInfo } from "../../data/saasData";
 
 export function StaffManagementTab() {
-  const { stores, sellers, currentStore, addSeller, toggleSellerActive, setSeller, currentSeller } =
-    useUserStore();
+  const {
+    stores,
+    sellers,
+    currentStore,
+    addSeller,
+    toggleSellerActive,
+    setSeller,
+    currentSeller,
+    updateSellerRole,
+  } = useUserStore();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showPins, setShowPins] = useState<Record<string, boolean>>({});
+
+  // Role Edit state
+  const [roleEditTarget, setRoleEditTarget] = useState<SellerInfo | null>(null);
+  const [editSecurityRole, setEditSecurityRole] = useState<"ROLE_ADMIN" | "ROLE_GERANT" | "ROLE_VENDEUR">("ROLE_VENDEUR");
+  const [editRoleTitle, setEditRoleTitle] = useState("");
+  const [isSavingRole, setIsSavingRole] = useState(false);
 
   // Form state for new seller
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Conseillère Joaillerie");
+  const [newSellerSecurityRole, setNewSellerSecurityRole] = useState<"ROLE_ADMIN" | "ROLE_GERANT" | "ROLE_VENDEUR">("ROLE_VENDEUR");
   const [selectedStoreId, setSelectedStoreId] = useState<string>(
     currentStore?.id || (stores[0] ? stores[0].id : "store-vendome-paris")
   );
@@ -35,6 +52,31 @@ export function StaffManagementTab() {
 
   const togglePinVisibility = (sellerId: string) => {
     setShowPins((prev) => ({ ...prev, [sellerId]: !prev[sellerId] }));
+  };
+
+  const handleOpenEditRole = (seller: SellerInfo) => {
+    setRoleEditTarget(seller);
+    setEditSecurityRole(
+      seller.securityRole ||
+        (seller.role.includes("Direct") || seller.role.includes("Gérant")
+          ? "ROLE_GERANT"
+          : seller.role.includes("Admin")
+          ? "ROLE_ADMIN"
+          : "ROLE_VENDEUR")
+    );
+    setEditRoleTitle(seller.role);
+  };
+
+  const handleSaveRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleEditTarget) return;
+
+    setIsSavingRole(true);
+    await updateSellerRole(roleEditTarget.id, editSecurityRole, editRoleTitle);
+    setIsSavingRole(false);
+    setRoleEditTarget(null);
+    setNotification(`Habilitations et rôle mis à jour avec succès pour ${roleEditTarget.name} !`);
+    setTimeout(() => setNotification(null), 5000);
   };
 
   const handleCreateSeller = async (e: React.FormEvent) => {
@@ -87,6 +129,7 @@ export function StaffManagementTab() {
       username: generatedUsername,
       initials: generatedInitials,
       role: role,
+      securityRole: newSellerSecurityRole,
       pin: pin,
       storeId: selectedStoreId,
       email: email || `${generatedUsername}@vendome-bijoux.fr`,
@@ -206,9 +249,25 @@ export function StaffManagementTab() {
 
                     {/* Role */}
                     <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                        {seller.role}
-                      </span>
+                      <div className="space-y-1">
+                        <span className="font-medium text-slate-800 block">{seller.role}</span>
+                        {seller.securityRole === "ROLE_ADMIN" || seller.role.toLowerCase().includes("admin") ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                            <Shield className="w-2.5 h-2.5 text-amber-600" />
+                            <span>👑 Patron / Direction</span>
+                          </span>
+                        ) : seller.securityRole === "ROLE_GERANT" || seller.role.toLowerCase().includes("gérant") || seller.role.toLowerCase().includes("direct") ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                            <Shield className="w-2.5 h-2.5 text-blue-600" />
+                            <span>👔 Gérant Magasin</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <Shield className="w-2.5 h-2.5 text-emerald-600" />
+                            <span>💎 Vendeuse (Épurée)</span>
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* PIN */}
@@ -253,14 +312,26 @@ export function StaffManagementTab() {
 
                     {/* Actions */}
                     <td className="py-3 px-4 text-right">
-                      {!isCurrent && (
+                      <div className="inline-flex items-center gap-1.5">
+                        {/* Edit Role Button (Available for Managers & Admins) */}
                         <button
-                          onClick={() => setSeller(seller)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-50 hover:text-amber-800 text-slate-700 font-medium text-[11px] border border-slate-200 transition-all"
+                          onClick={() => handleOpenEditRole(seller)}
+                          className="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-50 hover:text-amber-800 text-slate-700 font-medium text-[11px] border border-slate-200 transition-all flex items-center gap-1 shadow-2xs"
+                          title="Modifier les droits d'accès et le rôle"
                         >
-                          Basculer sur cette session
+                          <Edit3 className="w-3 h-3 text-amber-600" />
+                          <span>Rôle & Droits</span>
                         </button>
-                      )}
+
+                        {!isCurrent && (
+                          <button
+                            onClick={() => setSeller(seller)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-[11px] border border-slate-200 transition-all"
+                          >
+                            Basculer
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -340,10 +411,10 @@ export function StaffManagementTab() {
             </div>
 
             {/* Role & Store Selection */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Rôle Joaillerie *
+                  Intitulé du Poste *
                 </label>
                 <select
                   value={role}
@@ -355,6 +426,21 @@ export function StaffManagementTab() {
                   <option value="Gemmologue & Vendeuse">Gemmologue & Vendeuse</option>
                   <option value="Maître Artisan Joaillier">Maître Artisan Joaillier</option>
                   <option value="Apprentie Joaillerie">Apprentie Joaillerie</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Droits & Habilitations *
+                </label>
+                <select
+                  value={newSellerSecurityRole}
+                  onChange={(e) => setNewSellerSecurityRole(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                >
+                  <option value="ROLE_VENDEUR">💎 Vendeuse (Interface Épurée)</option>
+                  <option value="ROLE_GERANT">👔 Gérant (Gestion Boutique)</option>
+                  <option value="ROLE_ADMIN">👑 Direction (Tous Droits)</option>
                 </select>
               </div>
 
@@ -414,6 +500,170 @@ export function StaffManagementTab() {
               >
                 <UserPlus className="w-4 h-4 text-amber-200" />
                 <span>{isSubmitting ? "Création en cours..." : "Créer le Compte Vendeuse"}</span>
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Modal Edition Role & Droits */}
+      {roleEditTarget && (
+        <Modal
+          isOpen={!!roleEditTarget}
+          onClose={() => setRoleEditTarget(null)}
+          title={
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-amber-600" />
+              <span>Gestion des Droits & Habilitations : {roleEditTarget.name}</span>
+            </div>
+          }
+          description="Affectez le profil de sécurité. L'interface s'adaptera automatiquement pour masquer les fonctions non autorisées."
+          maxWidth="md"
+        >
+          <form onSubmit={handleSaveRole} className="space-y-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${
+                  roleEditTarget.avatarBg || "from-amber-600 to-yellow-600"
+                } flex items-center justify-center text-white font-bold text-sm shadow-xs shrink-0`}
+              >
+                {roleEditTarget.initials}
+              </div>
+              <div>
+                <div className="font-bold text-slate-900 text-sm">{roleEditTarget.name}</div>
+                <div className="text-xs text-slate-500 font-mono">
+                  {roleEditTarget.email || roleEditTarget.username || "collaborateur"}
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Level Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">
+                Niveau d'Accès & Périmètre de Responsabilité *
+              </label>
+
+              <div className="grid grid-cols-1 gap-2.5">
+                {/* 1. ROLE_VENDEUR */}
+                <label
+                  className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                    editSecurityRole === "ROLE_VENDEUR"
+                      ? "bg-amber-500/10 border-amber-500 text-slate-900 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="securityRole"
+                    value="ROLE_VENDEUR"
+                    checked={editSecurityRole === "ROLE_VENDEUR"}
+                    onChange={() => setEditSecurityRole("ROLE_VENDEUR")}
+                    className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5 text-slate-900">
+                      <span>💎 Vendeuse Joaillerie (Interface Épurée)</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">
+                        Quotidien Caisse
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Accès restreint à la caisse POS, consultation stock vitrine/coffre, baguier CRM, dépôt SAV atelier et rachat d'or.{" "}
+                      <strong className="text-rose-600">Comptabilité, FEC et autres magasins masqués.</strong>
+                    </p>
+                  </div>
+                </label>
+
+                {/* 2. ROLE_GERANT */}
+                <label
+                  className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                    editSecurityRole === "ROLE_GERANT"
+                      ? "bg-amber-500/10 border-amber-500 text-slate-900 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="securityRole"
+                    value="ROLE_GERANT"
+                    checked={editSecurityRole === "ROLE_GERANT"}
+                    onChange={() => setEditSecurityRole("ROLE_GERANT")}
+                    className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5 text-slate-900">
+                      <span>👔 Directrice / Gérant de Magasin</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 font-bold">
+                        Gestion Boutique
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Gestion complète de sa boutique : caisse, commandes réassort, clôtures Z et M mensuelles, récolement livre de police, et gestion de ses vendeuses.
+                    </p>
+                  </div>
+                </label>
+
+                {/* 3. ROLE_ADMIN */}
+                <label
+                  className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                    editSecurityRole === "ROLE_ADMIN"
+                      ? "bg-amber-500/10 border-amber-500 text-slate-900 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="securityRole"
+                    value="ROLE_ADMIN"
+                    checked={editSecurityRole === "ROLE_ADMIN"}
+                    onChange={() => setEditSecurityRole("ROLE_ADMIN")}
+                    className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5 text-slate-900">
+                      <span>👑 Direction Générale / Patron (Accès Intégral)</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold">
+                        Superviseur
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Accès global multi-magasins : grand livre comptable, export FEC fiscal officiel, clôture annuelle A, configuration de la franchise SaaS.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Custom Role Title */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Intitulé affiché sur la fiche collaborateur
+              </label>
+              <input
+                type="text"
+                value={editRoleTitle}
+                onChange={(e) => setEditRoleTitle(e.target.value)}
+                placeholder="Ex: Conseillère Haute Joaillerie & Baguier"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+              />
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRoleEditTarget(null)}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingRole}
+                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all disabled:opacity-50"
+              >
+                <Shield className="w-4 h-4 text-amber-200" />
+                <span>{isSavingRole ? "Enregistrement..." : "Appliquer Rôle & Droits"}</span>
               </button>
             </div>
           </form>

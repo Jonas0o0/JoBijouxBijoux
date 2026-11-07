@@ -4,6 +4,7 @@ import fr.bijoux.erp.core.security.jwt.JwtAuthenticationFilter;
 import fr.bijoux.erp.core.tenant.TenantFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,6 +48,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers("/api/v1/accounting/**").hasAnyRole("ADMIN", "GERANT")
+                        .requestMatchers("/api/v1/pos/closures/m", "/api/v1/pos/closures/a").hasAnyRole("ADMIN", "GERANT")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/**").hasAnyRole("ADMIN", "GERANT")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").hasAnyRole("ADMIN", "GERANT")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

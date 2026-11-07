@@ -5,6 +5,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api/v1/accounting")
+@PreAuthorize("hasAnyRole('ADMIN', 'GERANT')")
 public class AccountingController {
 
     private final FecExportService fecExportService;

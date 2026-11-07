@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Scale,
   CreditCard,
-  Printer,
   Shield,
   Smartphone,
   Monitor,
@@ -16,11 +15,15 @@ import {
   Lock,
   Building2,
   MapPin,
+  Barcode,
+  Tag,
 } from "lucide-react";
 import { useHardwareStore } from "../../store/useHardwareStore";
 import { useUserStore } from "../../store/useUserStore";
 import { Modal, formatCurrency } from "@erp-bijoux/shared-ui";
 import { formatWeight } from "@erp-bijoux/shared-ui";
+import { JewelryLabelStudioModal } from "./JewelryLabelStudioModal";
+import { BarcodeScannerModal } from "./BarcodeScannerModal";
 
 export function HardwareToolbar() {
   const {
@@ -32,7 +35,6 @@ export function HardwareToolbar() {
     setSimulatedWeight,
     tpeStatus,
     openCashDrawer,
-    lastPrintedLabel,
   } = useHardwareStore();
 
   const {
@@ -50,7 +52,8 @@ export function HardwareToolbar() {
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [manualWeightInput, setManualWeightInput] = useState<string>("12.450");
   const [isStableToggle, setIsStableToggle] = useState<boolean>(true);
-  const [isZplPreviewOpen, setIsZplPreviewOpen] = useState(false);
+  const [isLabelStudioOpen, setIsLabelStudioOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   const handleApplySimulatedWeight = () => {
     const val = parseFloat(manualWeightInput) || 0;
@@ -239,14 +242,25 @@ export function HardwareToolbar() {
             </span>
           </div>
 
-          {/* Zebra Printer Status & Preview */}
+          {/* Scanner Button (Douchette USB + Caméra) */}
           <button
-            onClick={() => setIsZplPreviewOpen(true)}
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs text-slate-700 transition-colors shadow-2xs"
-            title="Dernière étiquette ZPL bijou imprimée"
+            onClick={() => setIsBarcodeScannerOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-amber-50 hover:border-amber-300 text-xs text-slate-800 transition-colors shadow-2xs group"
+            title="Scanner un code-barres (Douchette USB ou Caméra)"
           >
-            <Printer className="w-3.5 h-3.5 text-slate-500" />
-            <span>Zebra ZPL</span>
+            <Barcode className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
+            <span className="font-semibold">Scanner</span>
+          </button>
+
+          {/* Jewelry Barbell Label Studio */}
+          <button
+            onClick={() => setIsLabelStudioOpen(true)}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs text-slate-700 transition-colors shadow-2xs"
+            title="Studio d'impression étiquettes haltères bijoux & codes-barres"
+          >
+            <Tag className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden lg:inline">Étiquettes & Codes</span>
+            <span className="lg:hidden">Étiquettes</span>
           </button>
 
           {/* Cash drawer button */}
@@ -402,48 +416,17 @@ export function HardwareToolbar() {
         </div>
       </Modal>
 
-      {/* Zebra ZPL Label Preview Modal */}
-      <Modal
-        isOpen={isZplPreviewOpen}
-        onClose={() => setIsZplPreviewOpen(false)}
-        title="Prévisualisation Étiquette Bijou Zebra (ZPL II)"
-        description="Format haltère bijouterie 38x13mm avec code-barres 128"
-      >
-        <div className="space-y-4">
-          <div className="bg-slate-50 text-slate-950 p-6 rounded-xl border border-slate-200 flex items-center justify-center">
-            {/* SVG preview of rat-tail label */}
-            <div className="border border-dashed border-slate-300 p-4 rounded-xl bg-white w-full max-w-sm shadow-2xs">
-              <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-1">
-                <span>{lastPrintedLabel?.reference || "SOL-DIAM-050-YG"}</span>
-                <span className="font-mono text-amber-700">2 890,00 €</span>
-              </div>
-              <div className="text-[11px] text-slate-600 mt-1">
-                Solitaire Or Jaune 18K - 3.42g
-              </div>
-              <div className="mt-2 flex items-center justify-center py-1 bg-slate-50 border border-slate-200 rounded">
-                <div className="font-mono text-center">
-                  <div className="tracking-widest text-xs font-bold text-slate-800">||| | |||| | ||| || |||</div>
-                  <div className="text-[9px] text-slate-500">200000000101</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Visual Jewelry Barbell Label Studio Modal */}
+      <JewelryLabelStudioModal
+        isOpen={isLabelStudioOpen}
+        onClose={() => setIsLabelStudioOpen(false)}
+      />
 
-          <div>
-            <label className="text-xs text-slate-600 block mb-1 font-semibold">Code source ZPL envoyé à l'imprimante :</label>
-            <pre className="bg-slate-900 text-emerald-400 p-3 rounded-xl text-xs font-mono overflow-x-auto border border-slate-800 max-h-40">
-              {lastPrintedLabel?.zpl || `^XA
-^PW304^LL104
-^FO20,15^A0N,18,18^FDSolitaire Or Jaune 18K^FS
-^FO20,38^A0N,16,16^FDRef: SOL-DIAM-050-YG^FS
-^FO20,58^BY1,2,24^BCN,24,N,N,N^FD200000000101^FS
-^FO180,38^A0N,22,22^FD2890.00 EUR^FS
-^FO180,68^A0N,16,16^FDOr 18K^FS
-^XZ`}
-            </pre>
-          </div>
-        </div>
-      </Modal>
+      {/* Barcode Scanner Modal (Douchette USB + Caméra + Bips) */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+      />
     </>
   );
 }

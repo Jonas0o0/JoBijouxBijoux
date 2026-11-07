@@ -44,8 +44,22 @@ export function App() {
   const [isDbReady, setIsDbReady] = useState(false);
 
   const { connectScale } = useHardwareStore();
-  const { currentSeller, storeInfo, isAuthenticated, tenant } = useUserStore();
+  const { currentSeller, storeInfo, isAuthenticated, tenant, isAdmin, isGerant, isVendeur } = useUserStore();
   const { cart, getTotalTTC, customer } = usePosStore();
+
+  const adminMode = isAdmin();
+  const gerantMode = isGerant();
+  const vendeurMode = isVendeur();
+
+  // Enforce streamlined view for salesperson: redirect to POS if in restricted module
+  useEffect(() => {
+    if (vendeurMode) {
+      const restrictedScreens: ActiveScreen[] = ["ORDERS", "POLICE", "ACCOUNTING", "STORES"];
+      if (restrictedScreens.includes(activeScreen)) {
+        setActiveScreen("POS");
+      }
+    }
+  }, [vendeurMode, activeScreen]);
 
   // Initialize Dexie Seed & Connect Hardware scale stream
   useEffect(() => {
@@ -138,18 +152,20 @@ export function App() {
             <span>Stock & Catalogue</span>
           </button>
 
-          {/* 3. Commandes & Réassort */}
-          <button
-            onClick={() => setActiveScreen("ORDERS")}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-              activeScreen === "ORDERS"
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-            }`}
-          >
-            <Truck className={`w-4 h-4 ${activeScreen === "ORDERS" ? "text-amber-200" : "text-amber-600"}`} />
-            <span>Commandes & Réassort</span>
-          </button>
+          {/* 3. Commandes & Réassort (Gérants & Direction) */}
+          {(gerantMode || adminMode) && (
+            <button
+              onClick={() => setActiveScreen("ORDERS")}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                activeScreen === "ORDERS"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+              }`}
+            >
+              <Truck className={`w-4 h-4 ${activeScreen === "ORDERS" ? "text-amber-200" : "text-amber-600"}`} />
+              <span>Commandes</span>
+            </button>
+          )}
 
           {/* 4. Atelier & SAV */}
           <button
@@ -190,44 +206,67 @@ export function App() {
             <span>Clients & Baguier</span>
           </button>
 
-          {/* 7. Livre de Police */}
-          <button
-            onClick={() => setActiveScreen("POLICE")}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-              activeScreen === "POLICE"
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-            }`}
-          >
-            <BookOpen className={`w-4 h-4 ${activeScreen === "POLICE" ? "text-amber-200" : "text-slate-500"}`} />
-            <span>Livre de Police</span>
-          </button>
+          {/* 7. Livre de Police (Gérants & Direction) */}
+          {(gerantMode || adminMode) && (
+            <button
+              onClick={() => setActiveScreen("POLICE")}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                activeScreen === "POLICE"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+              }`}
+            >
+              <BookOpen className={`w-4 h-4 ${activeScreen === "POLICE" ? "text-amber-200" : "text-slate-500"}`} />
+              <span>Livre de Police</span>
+            </button>
+          )}
 
-          {/* 8. Comptabilité & Clôtures */}
-          <button
-            onClick={() => setActiveScreen("ACCOUNTING")}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-              activeScreen === "ACCOUNTING"
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-            }`}
-          >
-            <BarChart3 className={`w-4 h-4 ${activeScreen === "ACCOUNTING" ? "text-amber-200" : "text-slate-500"}`} />
-            <span>Comptabilité & Clôtures</span>
-          </button>
+          {/* 8. Comptabilité & Clôtures (Gérants & Direction) */}
+          {(gerantMode || adminMode) && (
+            <button
+              onClick={() => setActiveScreen("ACCOUNTING")}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                activeScreen === "ACCOUNTING"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+              }`}
+            >
+              <BarChart3 className={`w-4 h-4 ${activeScreen === "ACCOUNTING" ? "text-amber-200" : "text-slate-500"}`} />
+              <span>Comptabilité & Clôtures</span>
+            </button>
+          )}
 
-          {/* 9. Réseau Magasins & Transferts */}
-          <button
-            onClick={() => setActiveScreen("STORES")}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-              activeScreen === "STORES"
-                ? "bg-amber-600 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
-            }`}
-          >
-            <Building2 className={`w-4 h-4 ${activeScreen === "STORES" ? "text-amber-200" : "text-amber-600"}`} />
-            <span>🏛️ Réseau Magasins</span>
-          </button>
+          {/* 9. Réseau Magasins & Équipe (Gérants & Direction) */}
+          {(gerantMode || adminMode) && (
+            <button
+              onClick={() => setActiveScreen("STORES")}
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                activeScreen === "STORES"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80"
+              }`}
+            >
+              <Building2 className={`w-4 h-4 ${activeScreen === "STORES" ? "text-amber-200" : "text-amber-600"}`} />
+              <span>{adminMode ? "🏛️ Réseau Magasins" : "👥 Équipe & Boutique"}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right Info: Role Badge + Keyboard Cheatsheet */}
+        <div className="flex items-center gap-3">
+          {adminMode ? (
+            <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] shadow-2xs">
+              <span>👑 Direction (Tous Droits)</span>
+            </span>
+          ) : gerantMode ? (
+            <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-900 border border-blue-200 font-bold text-[10px] shadow-2xs">
+              <span>👔 Gérant ({storeInfo?.name})</span>
+            </span>
+          ) : (
+            <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold text-[10px] shadow-2xs">
+              <span>💎 Mode Vendeuse (Interface Épurée)</span>
+            </span>
+          )}
         </div>
 
         {/* Keyboard Shortcut Cheatsheet */}

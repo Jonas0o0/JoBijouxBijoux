@@ -32,6 +32,14 @@ export interface UserState {
   setSeller: (seller: SellerInfo) => void;
   addSeller: (seller: SellerInfo) => void;
   toggleSellerActive: (sellerId: string) => void;
+  updateSellerRole: (
+    sellerId: string,
+    securityRole: "ROLE_ADMIN" | "ROLE_GERANT" | "ROLE_VENDEUR",
+    newRoleLabel?: string
+  ) => Promise<void>;
+  isAdmin: () => boolean;
+  isGerant: () => boolean;
+  isVendeur: () => boolean;
 }
 
 const STORAGE_KEY = "erp_bijoux_auth_session";
@@ -243,5 +251,94 @@ export const useUserStore = create<UserState>((set, get) => ({
 
       return { sellers: updatedSellers };
     });
+  },
+
+  updateSellerRole: async (sellerId, securityRole, newRoleLabel) => {
+    // 1. Backend Spring Boot API call (if backend reachable)
+    try {
+      await fetch(`/api/v1/users/${sellerId}/roles`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "1",
+        },
+        body: JSON.stringify({ roles: [securityRole] }),
+      });
+    } catch (err) {
+      console.warn("Backend role update offline:", err);
+    }
+
+    // 2. Update state & localStorage
+    set((state) => {
+      const fallbackTitle =
+        securityRole === "ROLE_ADMIN"
+          ? "Directeur Général & Administrateur"
+          : securityRole === "ROLE_GERANT"
+          ? "Directeur de Magasin & Gérant"
+          : "Conseillère Joaillerie";
+
+      const updatedSellers = state.sellers.map((s) => {
+        if (s.id === sellerId) {
+          return {
+            ...s,
+            securityRole,
+            role: newRoleLabel || s.role || fallbackTitle,
+          };
+        }
+        return s;
+      });
+
+      try {
+        localStorage.setItem(CUSTOM_SELLERS_KEY, JSON.stringify(updatedSellers));
+      } catch (e) {
+        console.warn("Could not save updated sellers in localStorage:", e);
+      }
+
+      let newCurrent = state.currentSeller;
+      if (state.currentSeller.id === sellerId) {
+        newCurrent = updatedSellers.find((s) => s.id === sellerId) || state.currentSeller;
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              tenantId: state.tenant.id,
+              storeId: state.currentStore.id,
+              sellerId: newCurrent.id,
+            })
+          );
+        } catch (e) {}
+      }
+
+      return {
+        sellers: updatedSellers,
+        currentSeller: newCurrent,
+      };
+    });
+  },
+
+  isAdmin: () => {
+    const { currentSeller } = get();
+    if (!currentSeller) return false;
+    return (
+      currentSeller.securityRole === "ROLE_ADMIN" ||
+      currentSeller.role?.toLowerCase().includes("administrateur") ||
+      currentSeller.role?.toLowerCase().includes("patron")
+    );
+  },
+
+  isGerant: () => {
+    const { currentSeller } = get();
+    if (!currentSeller) return false;
+    if (get().isAdmin()) return true;
+    return (
+      currentSeller.securityRole === "ROLE_GERANT" ||
+      currentSeller.role?.toLowerCase().includes("gérant") ||
+      currentSeller.role?.toLowerCase().includes("directeur") ||
+      currentSeller.role?.toLowerCase().includes("responsable")
+    );
+  },
+
+  isVendeur: () => {
+    return !get().isAdmin() && !get().isGerant();
   },
 }));

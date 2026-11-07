@@ -21,7 +21,7 @@ import { useHardwareStore } from "../../store/useHardwareStore";
 import { useUserStore } from "../../store/useUserStore";
 import { useBarcodeScanner } from "../../hooks/useBarcodeScanner";
 import { usePosShortcuts } from "../../hooks/usePosShortcuts";
-import { MobileCameraScanner } from "./MobileCameraScanner";
+import { BarcodeScannerModal } from "../hardware/BarcodeScannerModal";
 import { JewelryDetailModal } from "./JewelryDetailModal";
 import { PaymentModal } from "./PaymentModal";
 import { ReceiptModal } from "./ReceiptModal";
@@ -174,11 +174,11 @@ export function PosScreen() {
 
               <button
                 onClick={() => setIsCameraScannerOpen(true)}
-                title="Scanner caméra"
-                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-200 shadow-xs transition-colors"
+                title="Scanner un code-barres (Douchette USB ou Caméra)"
+                className="px-3.5 py-2 bg-white hover:bg-amber-50 hover:border-amber-300 text-slate-800 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-200 shadow-xs transition-colors"
               >
                 <Camera className="w-4 h-4 text-amber-600" />
-                <span>Caméra</span>
+                <span>Scanner</span>
               </button>
 
               <button
@@ -653,11 +653,17 @@ export function PosScreen() {
         </div>
       </Modal>
 
-      {/* Mobile Barcode Scanner Camera Modal */}
-      <MobileCameraScanner
+      {/* Barcode Scanner Modal (Douchette USB + Caméra + Bips) */}
+      <BarcodeScannerModal
         isOpen={isCameraScannerOpen}
         onClose={() => setIsCameraScannerOpen(false)}
-        onScan={handleBarcodeScanned}
+        onScanSuccess={(code, product) => {
+          if (product) {
+            addToCart(product);
+          } else {
+            handleBarcodeScanned(code);
+          }
+        }}
       />
 
       {/* Instant Jewelry Sheet Modal */}

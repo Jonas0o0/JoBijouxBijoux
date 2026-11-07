@@ -17,14 +17,17 @@ import {
   Vault,
   Truck,
   Building2,
+  Barcode,
+  Tag,
 } from "lucide-react";
 import { db, type ProductItem } from "../../db/db";
 import { usePosStore } from "../../store/usePosStore";
-import { useHardwareStore } from "../../store/useHardwareStore";
 import { useUserStore } from "../../store/useUserStore";
 import { type StockTransferRecord } from "../../data/saasData";
 import { Modal, Badge, Button, Input } from "@erp-bijoux/shared-ui";
 import { formatCurrency, formatWeight } from "@erp-bijoux/shared-ui";
+import { JewelryLabelStudioModal } from "../hardware/JewelryLabelStudioModal";
+import { BarcodeScannerModal } from "../hardware/BarcodeScannerModal";
 
 interface StockInventoryScreenProps {
   onNavigateToPos?: () => void;
@@ -43,6 +46,11 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
   const [transferQuantity, setTransferQuantity] = useState<number>(1);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "info" } | null>(null);
 
+  // Jewelry Barbell Studio & Barcode Scanner states
+  const [isLabelStudioOpen, setIsLabelStudioOpen] = useState(false);
+  const [labelStudioProduct, setLabelStudioProduct] = useState<ProductItem | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
   const { stores, currentStore, currentSeller, tenant } = useUserStore();
   const [isInterStoreModalOpen, setIsInterStoreModalOpen] = useState(false);
   const [interStoreTarget, setInterStoreTarget] = useState<ProductItem | null>(null);
@@ -54,7 +62,6 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
   const [interStoreNotes, setInterStoreNotes] = useState<string>("Réassort vitrine inter-boutiques");
 
   const { addToCart } = usePosStore();
-  const { printJewelryLabel } = useHardwareStore();
 
   const loadProducts = async () => {
     const all = await db.products.toArray();
@@ -226,17 +233,12 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
   };
 
   const handlePrintLabel = (product: ProductItem) => {
-    printJewelryLabel({
-      reference: product.reference,
-      name: product.name,
-      price: product.priceTTC,
-      barcode: product.barcode,
-      metal: product.metalType,
-    });
-    setNotification({
-      type: "info",
-      message: `Ordre d'impression ZPL envoyé pour l'étiquette bijou : ${product.reference}`,
-    });
+    handleOpenLabelStudio(product);
+  };
+
+  const handleOpenLabelStudio = (product?: ProductItem) => {
+    setLabelStudioProduct(product || null);
+    setIsLabelStudioOpen(true);
   };
 
   const handleAddToCart = (product: ProductItem) => {
@@ -324,6 +326,26 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
                 <div className="text-xs font-bold font-mono text-slate-900">{stats.coffreCount} pcs</div>
               </div>
             </div>
+
+            {/* Barcode Scanner Button */}
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-amber-50 hover:border-amber-300 text-xs font-semibold text-slate-800 transition-colors shadow-2xs"
+              title="Scanner un bijou pour filtrer ou voir sa fiche"
+            >
+              <Barcode className="w-3.5 h-3.5 text-amber-600" />
+              <span>Scanner</span>
+            </button>
+
+            {/* Jewelry Barbell Label Studio */}
+            <button
+              onClick={() => handleOpenLabelStudio()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+              title="Créer et imprimer des étiquettes haltères avec codes-barres"
+            >
+              <Tag className="w-3.5 h-3.5 text-amber-600" />
+              <span>Studio Étiquettes</span>
+            </button>
 
             {/* View Mode Toggle */}
             <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -1121,6 +1143,30 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
           </div>
         </Modal>
       )}
+
+      {/* Visual Jewelry Barbell Label Studio */}
+      <JewelryLabelStudioModal
+        isOpen={isLabelStudioOpen}
+        onClose={() => {
+          setIsLabelStudioOpen(false);
+          loadProducts(); // reload in case product barcode was changed!
+        }}
+        initialProduct={labelStudioProduct}
+      />
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={(code, product) => {
+          if (product) {
+            setSelectedProduct(product);
+            setSearchQuery(code);
+          } else {
+            setSearchQuery(code);
+          }
+        }}
+      />
     </div>
   );
 }
