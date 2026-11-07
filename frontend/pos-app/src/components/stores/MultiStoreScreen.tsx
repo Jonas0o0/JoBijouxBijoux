@@ -15,6 +15,7 @@ import {
   Search,
   Check,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import { useUserStore } from "../../store/useUserStore";
 import {
@@ -23,6 +24,7 @@ import {
 } from "../../data/saasData";
 import { db, type ProductItem } from "../../db/db";
 import { Modal, formatCurrency } from "@erp-bijoux/shared-ui";
+import { StaffManagementTab } from "./StaffManagementTab";
 
 interface MultiStoreScreenProps {
   onNavigateToPos?: () => void;
@@ -31,7 +33,7 @@ interface MultiStoreScreenProps {
 export function MultiStoreScreen({ onNavigateToPos }: MultiStoreScreenProps) {
   const { tenant, stores, currentStore, switchStore, currentSeller } = useUserStore();
 
-  const [activeTab, setActiveTab] = useState<"STORES" | "TRANSFERS" | "NEW_TRANSFER">("STORES");
+  const [activeTab, setActiveTab] = useState<"STORES" | "TRANSFERS" | "NEW_TRANSFER" | "STAFF">("STORES");
   const [transfers, setTransfers] = useState<StockTransferRecord[]>(() => {
     try {
       const saved = localStorage.getItem("erp_bijoux_transfers");
@@ -240,6 +242,18 @@ export function MultiStoreScreen({ onNavigateToPos }: MultiStoreScreenProps) {
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nouveau Transfert</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("STAFF")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                activeTab === "STAFF"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-amber-600" />
+              <span>Équipes & Vendeuses</span>
             </button>
           </div>
         </div>
@@ -851,6 +865,9 @@ export function MultiStoreScreen({ onNavigateToPos }: MultiStoreScreenProps) {
             </form>
           </div>
         )}
+
+        {/* TAB 4: Équipe & Vendeuses */}
+        {activeTab === "STAFF" && <StaffManagementTab />}
       </div>
 
       {/* Printable Transfer Slip Modal */}

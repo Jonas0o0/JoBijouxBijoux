@@ -236,4 +236,55 @@ class PosControllerTest {
                 .andExpect(jsonPath("$.totalTtcCents").value(8000))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
+
+    @Test
+    @DisplayName("POST /api/v1/pos/cash-float - Doit enregistrer le fond de caisse initial")
+    void shouldRecordCashFloat() throws Exception {
+        PosController.CashFloatRequest request = new PosController.CashFloatRequest(
+                1L,
+                "CAISSE-01",
+                30000L,
+                "vendeuse1",
+                "Ouverture matin 300 euros"
+        );
+
+        mockMvc.perform(post("/api/v1/pos/cash-float")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RECORDED"))
+                .andExpect(jsonPath("$.amountCents").value(30000));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/pos/closures/m - Doit exécuter la clôture mensuelle M")
+    void shouldExecuteMonthlyM() throws Exception {
+        FiscalClosure closure = new FiscalClosure(
+                FiscalClosureType.MENSUEL_M,
+                1L,
+                1L,
+                "gerant",
+                Instant.now().minusSeconds(86400 * 30),
+                Instant.now(),
+                15000000L,
+                12500000L,
+                2500000L,
+                "{}",
+                "{}",
+                15000000L,
+                "PREV_HASH",
+                "CURR_HASH",
+                "SEALED_HASH_MONTHLY"
+        );
+        closure.setId(10L);
+
+        when(closureService.executeMonthlyM(1L, "gerant")).thenReturn(closure);
+
+        mockMvc.perform(post("/api/v1/pos/closures/m")
+                        .param("storeId", "1")
+                        .param("operator", "gerant"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.closureType").value("MENSUEL_M"))
+                .andExpect(jsonPath("$.totalTtcCents").value(15000000));
+    }
 }

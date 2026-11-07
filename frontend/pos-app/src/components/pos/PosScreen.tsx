@@ -13,6 +13,7 @@ import {
   Sparkles,
   Send,
   ShoppingBag,
+  Coins,
 } from "lucide-react";
 import { db, type ProductItem, type CustomerRecord } from "../../db/db";
 import { usePosStore } from "../../store/usePosStore";
@@ -25,6 +26,7 @@ import { JewelryDetailModal } from "./JewelryDetailModal";
 import { PaymentModal } from "./PaymentModal";
 import { ReceiptModal } from "./ReceiptModal";
 import { ZReportModal } from "./ZReportModal";
+import { CashFloatModal } from "./CashFloatModal";
 import { Modal } from "@erp-bijoux/shared-ui";
 import { formatCurrency, formatWeight } from "@erp-bijoux/shared-ui";
 
@@ -52,6 +54,7 @@ export function PosScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+  const [isCashFloatOpen, setIsCashFloatOpen] = useState(false);
   const [isZReportOpen, setIsZReportOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [selectedProductForModal, setSelectedProductForModal] = useState<ProductItem | null>(null);
@@ -176,6 +179,15 @@ export function PosScreen() {
               >
                 <Camera className="w-4 h-4 text-amber-600" />
                 <span>Caméra</span>
+              </button>
+
+              <button
+                onClick={() => setIsCashFloatOpen(true)}
+                title="Saisie du fond de caisse d'ouverture"
+                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-200 shadow-xs transition-colors"
+              >
+                <Coins className="w-4 h-4 text-amber-500" />
+                <span>Fond de Caisse</span>
               </button>
 
               <button
@@ -705,6 +717,15 @@ export function PosScreen() {
           </button>
         </div>
       </Modal>
+
+      {/* Cash Float Opening Modal */}
+      <CashFloatModal
+        isOpen={isCashFloatOpen}
+        onClose={() => setIsCashFloatOpen(false)}
+        onSuccess={() => {
+          setTransferNotification("Fond de caisse enregistré avec succès !");
+        }}
+      />
 
       {/* Z-Report Fiscal Closing Modal */}
       <ZReportModal isOpen={isZReportOpen} onClose={() => setIsZReportOpen(false)} />

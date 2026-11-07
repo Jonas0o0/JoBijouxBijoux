@@ -20,6 +20,7 @@ export interface UserState {
   currentStore: StoreInfo;
   storeInfo: StoreInfo; // Alias kept synchronized for backward compatibility
   currentSeller: SellerInfo;
+  sellers: SellerInfo[];
   deviceMode: "DESKTOP_POS" | "MOBILE_VENDEUSE";
 
   // Actions
@@ -29,9 +30,30 @@ export interface UserState {
   setDeviceMode: (mode: "DESKTOP_POS" | "MOBILE_VENDEUSE") => void;
   toggleDeviceMode: () => void;
   setSeller: (seller: SellerInfo) => void;
+  addSeller: (seller: SellerInfo) => void;
+  toggleSellerActive: (sellerId: string) => void;
 }
 
 const STORAGE_KEY = "erp_bijoux_auth_session";
+const CUSTOM_SELLERS_KEY = "erp_bijoux_custom_sellers";
+
+function getStoredCustomSellers(): SellerInfo[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_SELLERS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.warn("Could not read custom sellers:", e);
+  }
+  return [];
+}
+
+// Hydrate default tenant with custom sellers on boot
+const savedCustomSellers = getStoredCustomSellers();
+savedCustomSellers.forEach((custom) => {
+  if (!SAAS_TENANTS[0].sellers.find((s) => s.id === custom.id)) {
+    SAAS_TENANTS[0].sellers.push(custom);
+  }
+});
 
 // Helper to load persisted session from localStorage
 function getInitialAuthState(): {
@@ -88,6 +110,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   currentStore: initial.currentStore,
   storeInfo: initial.currentStore,
   currentSeller: initial.currentSeller,
+  sellers: SAAS_TENANTS[0].sellers,
   deviceMode: "DESKTOP_POS",
 
   login: (tenantId: string, storeId: string, seller: SellerInfo) => {
@@ -182,5 +205,43 @@ export const useUserStore = create<UserState>((set, get) => ({
       console.warn("Could not update seller in localStorage:", e);
     }
     set({ currentSeller: seller });
+  },
+
+  addSeller: (newSeller: SellerInfo) => {
+    // 1. Update in-memory SAAS_TENANTS
+    if (!SAAS_TENANTS[0].sellers.find((s) => s.id === newSeller.id)) {
+      SAAS_TENANTS[0].sellers.push(newSeller);
+    }
+
+    // 2. Persist to localStorage
+    const stored = getStoredCustomSellers();
+    const updated = [...stored.filter((s) => s.id !== newSeller.id), newSeller];
+    try {
+      localStorage.setItem(CUSTOM_SELLERS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn("Could not persist custom seller:", e);
+    }
+
+    // 3. Update zustand state
+    set((state) => ({
+      sellers: [...state.sellers.filter((s) => s.id !== newSeller.id), newSeller],
+    }));
+  },
+
+  toggleSellerActive: (sellerId: string) => {
+    set((state) => {
+      const updatedSellers = state.sellers.map((s) =>
+        s.id === sellerId ? { ...s, active: s.active === false ? true : false } : s
+      );
+
+      // Persist
+      try {
+        localStorage.setItem(CUSTOM_SELLERS_KEY, JSON.stringify(updatedSellers));
+      } catch (e) {
+        console.warn("Could not save toggled seller:", e);
+      }
+
+      return { sellers: updatedSellers };
+    });
   },
 }));

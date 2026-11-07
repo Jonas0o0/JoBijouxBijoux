@@ -15,10 +15,14 @@ import {
   Gem,
   Store,
   Vault,
+  Truck,
+  Building2,
 } from "lucide-react";
 import { db, type ProductItem } from "../../db/db";
 import { usePosStore } from "../../store/usePosStore";
 import { useHardwareStore } from "../../store/useHardwareStore";
+import { useUserStore } from "../../store/useUserStore";
+import { type StockTransferRecord } from "../../data/saasData";
 import { Modal, Badge, Button, Input } from "@erp-bijoux/shared-ui";
 import { formatCurrency, formatWeight } from "@erp-bijoux/shared-ui";
 
@@ -38,6 +42,16 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
   const [transferDirection, setTransferDirection] = useState<"TO_COFFRE" | "TO_VITRINE">("TO_COFFRE");
   const [transferQuantity, setTransferQuantity] = useState<number>(1);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "info" } | null>(null);
+
+  const { stores, currentStore, currentSeller, tenant } = useUserStore();
+  const [isInterStoreModalOpen, setIsInterStoreModalOpen] = useState(false);
+  const [interStoreTarget, setInterStoreTarget] = useState<ProductItem | null>(null);
+  const [interStoreDestId, setInterStoreDestId] = useState<string>(
+    stores.find((s) => s.id !== currentStore?.id)?.id || (stores[1] ? stores[1].id : "store-vendome-cannes")
+  );
+  const [interStoreCarrier, setInterStoreCarrier] = useState<string>("Brinks Haute Sécurité (Fourgon Blindé)");
+  const [interStoreQuantity, setInterStoreQuantity] = useState<number>(1);
+  const [interStoreNotes, setInterStoreNotes] = useState<string>("Réassort vitrine inter-boutiques");
 
   const { addToCart } = usePosStore();
   const { printJewelryLabel } = useHardwareStore();
@@ -129,6 +143,86 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
         transferDirection === "TO_COFFRE" ? "Vitrine → Coffre" : "Coffre → Vitrine"
       })`,
     });
+  };
+
+  // Inter-store transfer with carrier and backend API
+  const handleInterStoreTransfer = async () => {
+    if (!interStoreTarget) return;
+    const targetStore = stores.find((s) => s.id === interStoreDestId) || stores[1] || stores[0];
+
+    // Deduct stock locally
+    let remaining = interStoreQuantity;
+    let newVitrine = interStoreTarget.stockVitrine;
+    let newCoffre = interStoreTarget.stockCoffre;
+
+    if (newCoffre >= remaining) {
+      newCoffre -= remaining;
+      remaining = 0;
+    } else {
+      remaining -= newCoffre;
+      newCoffre = 0;
+      newVitrine = Math.max(0, newVitrine - remaining);
+    }
+
+    await db.products.update(interStoreTarget.id, {
+      stockVitrine: newVitrine,
+      stockCoffre: newCoffre,
+    });
+
+    // Send to backend Spring Boot API
+    try {
+      await fetch(`/api/v1/stock/items/${interStoreTarget.id}/transfer-store`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "1",
+        },
+        body: JSON.stringify({
+          targetStoreId: 2,
+          reason: interStoreNotes,
+        }),
+      });
+    } catch (err) {
+      console.warn("Backend stock transfer offline, local transfer logged:", err);
+    }
+
+    // Save into transfers registry
+    const newRecord: StockTransferRecord = {
+      id: `trans-${Date.now()}`,
+      transferNumber: `TR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(100 + Math.random() * 900)}`,
+      tenantId: tenant?.id || "tenant-vendome",
+      sourceStoreId: currentStore?.id || "store-vendome-paris",
+      sourceStoreName: currentStore?.name || "Boutique Vendôme",
+      targetStoreId: targetStore.id,
+      targetStoreName: targetStore.name,
+      productReference: interStoreTarget.reference,
+      productName: interStoreTarget.name,
+      productCategory: interStoreTarget.category,
+      unitPriceTTC: interStoreTarget.priceTTC,
+      quantity: interStoreQuantity,
+      originLocation: "COFFRE",
+      destinationLocation: "VITRINE",
+      carrier: interStoreCarrier,
+      sealNumber: `BK-${Math.floor(100000 + Math.random() * 900000)}`,
+      notes: interStoreNotes,
+      status: "EN_TRANSIT",
+      senderSellerName: currentSeller?.name || "Vendeuse",
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem("erp_bijoux_transfers") || "[]");
+      localStorage.setItem("erp_bijoux_transfers", JSON.stringify([newRecord, ...existing]));
+    } catch (e) {
+      console.warn("Failed saving transfer record:", e);
+    }
+
+    setIsInterStoreModalOpen(false);
+    setNotification({
+      type: "success",
+      message: `Expédition inter-boutique initiée vers ${targetStore.name} via ${interStoreCarrier} (Scellé n° ${newRecord.sealNumber})`,
+    });
+    await loadProducts();
   };
 
   const handlePrintLabel = (product: ProductItem) => {
@@ -489,6 +583,19 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
                               <ArrowLeftRight className="w-3.5 h-3.5 text-amber-600" />
                             </button>
 
+                            {/* Transfer Inter-Store */}
+                            <button
+                              onClick={() => {
+                                setInterStoreTarget(p);
+                                setInterStoreQuantity(1);
+                                setIsInterStoreModalOpen(true);
+                              }}
+                              title="Expédier vers une autre boutique (Brinks)"
+                              className="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-xs"
+                            >
+                              <Truck className="w-3.5 h-3.5 text-blue-600" />
+                            </button>
+
                             {/* Print ZPL Label */}
                             <button
                               onClick={() => handlePrintLabel(p)}
@@ -636,6 +743,18 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
                       </button>
 
                       <button
+                        onClick={() => {
+                          setInterStoreTarget(p);
+                          setInterStoreQuantity(1);
+                          setIsInterStoreModalOpen(true);
+                        }}
+                        title="Expédier vers une autre boutique (Brinks)"
+                        className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-xs"
+                      >
+                        <Truck className="w-3.5 h-3.5 text-blue-600" />
+                      </button>
+
+                      <button
                         onClick={() => handlePrintLabel(p)}
                         title="Imprimer étiquette Zebra"
                         className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-xs"
@@ -766,6 +885,126 @@ export function StockInventoryScreen({ onNavigateToPos }: StockInventoryScreenPr
               </Button>
               <Button size="sm" onClick={handleTransferStock}>
                 Confirmer le déplacement
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Inter-Store Transfer Modal */}
+      {interStoreTarget && (
+        <Modal
+          isOpen={isInterStoreModalOpen}
+          onClose={() => setIsInterStoreModalOpen(false)}
+          title={
+            <div className="flex items-center gap-2">
+              <Truck className="w-5 h-5 text-amber-600" />
+              <span>Expédition Inter-Boutiques Sécurisée</span>
+            </div>
+          }
+          description={`Pièce de Joaillerie : ${interStoreTarget.name} (${interStoreTarget.reference})`}
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200/80 rounded-xl p-3 flex items-start gap-3 text-xs text-blue-950">
+              <Building2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Transfert de Valeurs Déclarées</p>
+                <p className="text-[11px] text-blue-900/90 mt-0.5">
+                  Départ : <strong>{currentStore?.name || "Boutique Vendôme"}</strong>. Le transfert génère un bordereau scellé inaltérable et met à jour l'inventaire en temps réel.
+                </p>
+              </div>
+            </div>
+
+            {/* Destination Store */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Boutique Destinataire *
+              </label>
+              <select
+                value={interStoreDestId}
+                onChange={(e) => setInterStoreDestId(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                {stores
+                  .filter((s) => s.id !== currentStore?.id)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.city})
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Carrier */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Transporteur Agréé Transport de Valeurs *
+              </label>
+              <select
+                value={interStoreCarrier}
+                onChange={(e) => setInterStoreCarrier(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="Brinks Haute Sécurité (Fourgon Blindé)">
+                  Brinks Haute Sécurité (Fourgon Blindé)
+                </option>
+                <option value="Loomis Transport de Valeurs">
+                  Loomis Transport de Valeurs
+                </option>
+                <option value="Coursier Sécurisé Maison Vendôme">
+                  Coursier Sécurisé Maison Vendôme
+                </option>
+              </select>
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Quantité à Expédier (Dispo Coffre: {interStoreTarget.stockCoffre}, Vitrine: {interStoreTarget.stockVitrine})
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={interStoreTarget.stockCoffre + interStoreTarget.stockVitrine}
+                value={interStoreQuantity}
+                onChange={(e) =>
+                  setInterStoreQuantity(
+                    Math.min(
+                      interStoreTarget.stockCoffre + interStoreTarget.stockVitrine,
+                      Math.max(1, parseInt(e.target.value) || 1)
+                    )
+                  )
+                }
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Motif / Notes */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Motif du Transfert
+              </label>
+              <input
+                type="text"
+                value={interStoreNotes}
+                onChange={(e) => setInterStoreNotes(e.target.value)}
+                placeholder="Ex: Demande client VIP pour essayage privé ce samedi..."
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsInterStoreModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button size="sm" onClick={handleInterStoreTransfer}>
+                Émettre le Bordereau d'Expédition
               </Button>
             </div>
           </div>

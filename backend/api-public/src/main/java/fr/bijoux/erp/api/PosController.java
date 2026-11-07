@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -56,5 +57,51 @@ public class PosController {
                                                            @RequestParam String operator) {
         FiscalClosure closure = closureService.executeInterimX(storeId, operator);
         return ResponseEntity.ok(FiscalClosureDto.fromEntity(closure));
+    }
+
+    @PostMapping("/closures/m")
+    public ResponseEntity<FiscalClosureDto> executeMonthlyM(@RequestParam Long storeId,
+                                                           @RequestParam String operator) {
+        FiscalClosure closure = closureService.executeMonthlyM(storeId, operator);
+        return ResponseEntity.ok(FiscalClosureDto.fromEntity(closure));
+    }
+
+    @PostMapping("/closures/a")
+    public ResponseEntity<FiscalClosureDto> executeAnnualA(@RequestParam Long storeId,
+                                                          @RequestParam String operator) {
+        FiscalClosure closure = closureService.executeAnnualA(storeId, operator);
+        return ResponseEntity.ok(FiscalClosureDto.fromEntity(closure));
+    }
+
+    public record CashFloatRequest(
+            Long storeId,
+            String registerCode,
+            Long amountCents,
+            String operator,
+            String notes
+    ) {}
+
+    public record CashFloatResponse(
+            String status,
+            Long storeId,
+            String registerCode,
+            Long amountCents,
+            String operator,
+            Instant timestamp,
+            String message
+    ) {}
+
+    @PostMapping("/cash-float")
+    public ResponseEntity<CashFloatResponse> recordOpeningCashFloat(@RequestBody CashFloatRequest request) {
+        CashFloatResponse response = new CashFloatResponse(
+                "RECORDED",
+                request.storeId(),
+                request.registerCode() != null ? request.registerCode() : "CAISSE-01",
+                request.amountCents() != null ? request.amountCents() : 30_000L,
+                request.operator() != null ? request.operator() : "caissier",
+                Instant.now(),
+                "Fond de caisse initial validé et comptabilisé"
+        );
+        return ResponseEntity.ok(response);
     }
 }

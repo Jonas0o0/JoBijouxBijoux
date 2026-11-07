@@ -31,9 +31,13 @@ export interface StoreInfo {
 export interface SellerInfo {
   id: string;
   name: string;
+  username?: string;
   initials: string;
   role: string;
   pin: string;
+  storeId?: string;
+  email?: string;
+  active?: boolean;
   avatarBg?: string;
 }
 

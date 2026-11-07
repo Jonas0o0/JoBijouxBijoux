@@ -20,7 +20,7 @@ public class CustomerMeasurement {
     @Column(name = "measurement_type", nullable = false, length = 40)
     private MeasurementType measurementType;
 
-    @Column(name = "value", nullable = false, precision = 6, scale = 2)
+    @Column(name = "\"value\"", nullable = false, precision = 6, scale = 2)
     private BigDecimal value;
 
     @Column(name = "finger_name", length = 60)

@@ -167,6 +167,54 @@ public class JewelryCatalogService {
                 .toList();
     }
 
+    /**
+     * Transfère une pièce de joaillerie vers une autre boutique du réseau avec traçabilité sécurisée.
+     */
+    @Transactional
+    public JewelryItem transferToStore(Long itemId, Long targetStoreId, Long targetLocationId, String performedBy, String transferSlipNumber, String notes) {
+        JewelryItem item = jewelryItemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Bijou introuvable id=" + itemId));
+
+        Long previousStoreId = item.getStoreId();
+        StorageLocation previousLocation = item.getStorageLocation();
+
+        item.setStoreId(targetStoreId);
+        if (targetLocationId != null) {
+            StorageLocation targetLocation = storageLocationRepository.findById(targetLocationId)
+                    .orElse(null);
+            if (targetLocation != null) {
+                item.setStorageLocation(targetLocation);
+                item.setStatus(determineStatusFromLocation(targetLocation.getLocationType()));
+            }
+        }
+        item.setUpdatedAt(Instant.now());
+
+        JewelryItem updated = jewelryItemRepository.save(item);
+
+        String slipInfo = transferSlipNumber != null ? " [Bordereau " + transferSlipNumber + "]" : "";
+        String fullNotes = "Transfert boutique " + previousStoreId + " -> " + targetStoreId + slipInfo + (notes != null ? " : " + notes : "");
+
+        InventoryMovement movement = new InventoryMovement(
+                updated,
+                MovementType.TRANSFERT_EMPLACEMENT,
+                previousLocation,
+                item.getStorageLocation(),
+                performedBy != null ? performedBy : "VENDEUR",
+                fullNotes
+        );
+        inventoryMovementRepository.save(movement);
+
+        return updated;
+    }
+
+    @Transactional(readOnly = true)
+    public List<JewelryItem> findItemsByStore(Long storeId, JewelryItemStatus status) {
+        return jewelryItemRepository.findAll().stream()
+                .filter(i -> storeId == null || Objects.equals(i.getStoreId(), storeId))
+                .filter(i -> status == null || i.getStatus() == status)
+                .toList();
+    }
+
     private JewelryItemStatus determineStatusFromLocation(StorageLocationType type) {
         return switch (type) {
             case VITRINE, PLATEAU -> JewelryItemStatus.EN_VITRINE;
